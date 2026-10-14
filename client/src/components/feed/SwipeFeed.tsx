@@ -1,164 +1,293 @@
 import React, { useState } from "react";
-import { RefreshCw, X, Check, Lock, Sparkles, ArrowRight } from "lucide-react";
+import { 
+  Flame, 
+  Repeat, 
+  ShieldCheck, 
+  Lock, 
+  RefreshCw, 
+  Zap, 
+  X, 
+  Check 
+} from "lucide-react";
 import { SwipeCard } from "./SwipeCard";
+import { MatchModal } from "./MatchModal";
 import { MOCK_PROFILES } from "../../data/mockProfiles";
-import type { SkillProfile, SwipeDirection } from "../../types/swipe";
+import { useDualoStore } from "../../store/useDualoStore";
+import type { UserProfileCard } from "../../types/swipe";
 
 interface SwipeFeedProps {
   onOpenChatGate: () => void;
 }
 
 export const SwipeFeed: React.FC<SwipeFeedProps> = ({ onOpenChatGate }) => {
-  const [profiles, setProfiles] = useState<SkillProfile[]>(MOCK_PROFILES);
-  const [remainingSwipes, setRemainingSwipes] = useState<number>(10);
-  const [matchedProfile, setMatchedProfile] = useState<SkillProfile | null>(null);
+  const { profile, remainingSwipes, decrementSwipes, streak } = useDualoStore();
 
-  const handleSwipe = (direction: SwipeDirection, profile: SkillProfile) => {
-    if (remainingSwipes <= 0) return;
+  const [cards, setCards] = useState<UserProfileCard[]>(MOCK_PROFILES);
+  const [matchedProfile, setMatchedProfile] = useState<UserProfileCard | null>(null);
+  const [swipeHistory, setSwipeHistory] = useState<{ name: string; action: "SWAP" | "SKIP" }[]>([]);
 
-    setRemainingSwipes((prev) => Math.max(0, prev - 1));
-    setProfiles((prev) => prev.filter((p) => p.id !== profile.id));
+  const handleSwipe = (direction: "left" | "right") => {
+    if (remainingSwipes <= 0 || cards.length === 0) return;
 
-    if (direction === "right" && Math.random() > 0.4) {
-      setMatchedProfile(profile);
+    const currentCard = cards[cards.length - 1];
+
+    if (direction === "right") {
+      // Simulate mutual match trigger
+      if (Math.random() > 0.4) {
+        setMatchedProfile(currentCard);
+      }
+      setSwipeHistory((prev) => [
+        { name: currentCard.fullName, action: "SWAP" },
+        ...prev.slice(0, 4),
+      ]);
+    } else {
+      setSwipeHistory((prev) => [
+        { name: currentCard.fullName, action: "SKIP" },
+        ...prev.slice(0, 4),
+      ]);
     }
+
+    decrementSwipes();
+    setCards((prev) => prev.slice(0, prev.length - 1));
   };
 
-  const currentProfile = profiles[profiles.length - 1];
-  const nextProfile = profiles[profiles.length - 2];
+  const handleResetDeck = () => {
+    setCards(MOCK_PROFILES);
+  };
 
   return (
-    <div className="min-h-[100dvh] bg-white text-black flex flex-col justify-between items-center p-4 md:p-6 font-sans selection:bg-[#ff3300] selection:text-white border-x-2 border-black max-w-lg mx-auto">
+    <div className="w-full space-y-6">
       
-      {/* Swiss Bar Navigation */}
-      <header className="w-full border-b-2 border-black pb-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-black uppercase">
-            DUALO<span className="text-[#ff3300]">.</span>
-          </h1>
-          <p className="font-mono text-[10px] text-zinc-500 uppercase">SWIPE_DISCOVERY_ENGINE</p>
+      {/* Mobile Top Quota Bar */}
+      <div className="lg:hidden flex items-center justify-between bg-black text-white p-3 border-2 border-black font-mono text-xs shadow-[3px_3px_0px_0px_#ff3300]">
+        <div className="flex items-center gap-2">
+          <Repeat className="w-4 h-4 text-[#ff3300]" />
+          <span>QUOTA: {remainingSwipes}/10 SWIPES</span>
         </div>
-
-        {/* Daily Quota Counter */}
-        <div className="bg-[#f5f5f5] border-2 border-black px-3 py-1 font-mono text-xs font-bold flex items-center gap-1.5 shadow-[2px_2px_0px_0px_#000000]">
-          <span className="text-[#ff3300]">{remainingSwipes}</span>
-          <span className="text-zinc-500">/ 10 FREE</span>
+        <div className="flex items-center gap-1.5">
+          <Flame className="w-4 h-4 text-[#ff3300]" />
+          <span>{streak.currentStreak}D STREAK</span>
         </div>
-      </header>
+      </div>
 
-      {/* Main Card Container */}
-      <main className="w-full max-w-sm h-[460px] relative my-auto flex items-center justify-center">
-        {remainingSwipes <= 0 ? (
-          /* Quota Limit Reached */
-          <div className="bg-white border-2 border-black p-6 text-center space-y-4 shadow-[6px_6px_0px_0px_#000000]">
-            <div className="w-12 h-12 bg-black text-white border-2 border-black flex items-center justify-center mx-auto">
-              <Lock className="w-6 h-6 text-[#ff3300]" />
+      {/* 12-Column Swiss Modern Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* LEFT SIDEBAR (Desktop Only): Telemetry & Status */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-4 font-mono text-xs">
+          
+          {/* Active Profile Card */}
+          <div className="bg-[#f5f5f5] border-2 border-black p-4 shadow-[4px_4px_0px_0px_#000000] space-y-3">
+            <div className="flex items-center justify-between border-b border-black pb-2">
+              <span className="font-bold text-black uppercase">[MY_SWAPPER_PROFILE]</span>
+              {profile.isPhoneVerified ? (
+                <ShieldCheck className="w-4 h-4 text-[#ff3300]" />
+              ) : (
+                <Lock className="w-4 h-4 text-zinc-400" />
+              )}
             </div>
-            <h3 className="text-lg font-black uppercase text-black">QUOTA EXHAUSTED</h3>
-            <p className="text-xs text-zinc-600 font-medium leading-relaxed">
-              Daily quota depleted. Submit a learning log to extend your streak and receive +5 bonus swipes.
-            </p>
-            <button
-              type="button"
-              onClick={() => alert("Redirecting to Blog Section...")}
-              className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3 border-2 border-black text-xs uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_0px_#000000]"
-            >
-              WRITE LOG FOR +5 SWIPES
-            </button>
-          </div>
-        ) : profiles.length > 0 ? (
-          /* Active Deck */
-          <>
-            {nextProfile && (
-              <SwipeCard
-                key={nextProfile.id}
-                profile={nextProfile}
-                isFront={false}
-                onSwipe={handleSwipe}
-              />
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-black text-white font-bold text-sm flex items-center justify-center border border-black">
+                {profile.fullName[0]}
+              </div>
+              <div>
+                <p className="font-bold text-sm text-black uppercase leading-tight">{profile.fullName}</p>
+                <p className="text-zinc-500 text-[11px]">{profile.handle}</p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-black p-2.5 space-y-1">
+              <span className="text-[10px] text-zinc-500 uppercase block">[SWIPE_QUOTA_REMAINING]</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-2xl font-black text-black">{remainingSwipes}</span>
+                <span className="text-zinc-500 text-[10px]">/ 10 DAILY FREE</span>
+              </div>
+            </div>
+
+            {!profile.isPhoneVerified && (
+              <button
+                type="button"
+                onClick={onOpenChatGate}
+                className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-2 px-3 border border-black text-[11px] uppercase flex items-center justify-center gap-1.5 cursor-pointer transition shadow-[2px_2px_0px_0px_#000000]"
+              >
+                <Lock className="w-3.5 h-3.5" /> VERIFY PHONE TO CHAT
+              </button>
             )}
-            {currentProfile && (
-              <SwipeCard
-                key={currentProfile.id}
-                profile={currentProfile}
-                isFront={true}
-                onSwipe={handleSwipe}
-              />
-            )}
-          </>
-        ) : (
-          /* Deck Exhausted */
-          <div className="bg-white border-2 border-black p-6 text-center space-y-4 shadow-[6px_6px_0px_0px_#000000]">
-            <h3 className="text-lg font-black uppercase text-black">STACK EXHAUSTED</h3>
-            <p className="text-xs text-zinc-600 font-medium">
-              No additional profiles match your immediate filters.
-            </p>
-            <button
-              type="button"
-              onClick={() => setProfiles(MOCK_PROFILES)}
-              className="bg-black text-white font-bold px-5 py-3 border-2 border-black text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-2 mx-auto cursor-pointer shadow-[3px_3px_0px_0px_#ff3300]"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> RE-POPULATE STACK
-            </button>
           </div>
-        )}
-      </main>
 
-      {/* Action Controls Bar */}
-      <footer className="w-full max-w-sm flex justify-center items-center gap-6 py-3 border-t-2 border-black">
-        <button
-          type="button"
-          disabled={!currentProfile || remainingSwipes <= 0}
-          onClick={() => currentProfile && handleSwipe("left", currentProfile)}
-          className="w-14 h-14 bg-white border-2 border-black text-black hover:bg-black hover:text-white flex items-center justify-center transition cursor-pointer disabled:opacity-30 shadow-[3px_3px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
-          aria-label="Skip"
-        >
-          <X className="w-6 h-6" />
-        </button>
+          {/* Active Skill Set Preview */}
+          <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_#000000] space-y-3">
+            <span className="font-bold text-black uppercase block border-b border-black pb-1">
+              [ACTIVE_BARTER_PAIR]
+            </span>
 
-        <button
-          type="button"
-          disabled={!currentProfile || remainingSwipes <= 0}
-          onClick={() => currentProfile && handleSwipe("right", currentProfile)}
-          className="w-16 h-16 bg-[#ff3300] hover:bg-black text-white border-2 border-black flex items-center justify-center transition cursor-pointer disabled:opacity-30 shadow-[4px_4px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
-          aria-label="Propose Swap"
-        >
-          <Check className="w-7 h-7 stroke-[3]" />
-        </button>
-      </footer>
+            <div>
+              <span className="text-[10px] text-zinc-500 uppercase block mb-1">[YOU_TEACH]</span>
+              <div className="flex flex-wrap gap-1">
+                {profile.skillsOffered.map((sk) => (
+                  <span key={sk} className="bg-[#ff3300] text-white font-bold text-[10px] px-2 py-0.5 border border-black">
+                    {sk}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-      {/* Mutual Match Modal */}
+            <div>
+              <span className="text-[10px] text-zinc-500 uppercase block mb-1">[YOU_SEEK]</span>
+              <div className="flex flex-wrap gap-1">
+                {profile.skillsWanted.map((sk) => (
+                  <span key={sk} className="bg-black text-white font-bold text-[10px] px-2 py-0.5 border border-black">
+                    {sk}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+        {/* CENTER COLUMN: Interactive Card Stack Deck */}
+        <main className="col-span-1 lg:col-span-6 w-full max-w-md mx-auto flex flex-col items-center">
+          
+          <div className="w-full relative min-h-[480px] flex items-center justify-center">
+            {cards.length > 0 && remainingSwipes > 0 ? (
+              cards.map((cardProfile, index) => {
+                const isTop = index === cards.length - 1;
+                return (
+                  <SwipeCard
+                    key={cardProfile.id}
+                    profile={cardProfile}
+                    isTop={isTop}
+                    onSwipe={handleSwipe}
+                  />
+                );
+              })
+            ) : (
+              /* Empty Deck or Quota Exhausted Card */
+              <div className="w-full bg-white border-2 border-black p-8 text-center space-y-5 shadow-[8px_8px_0px_0px_#000000]">
+                <div className="w-14 h-14 bg-[#ff3300] text-white border-2 border-black mx-auto flex items-center justify-center shadow-[3px_3px_0px_0px_#000000]">
+                  <Zap className="w-7 h-7 stroke-[2.5]" />
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black uppercase text-black">
+                    {remainingSwipes <= 0 ? "DAILY QUOTA REACHED" : "DECK EXHAUSTED"}
+                  </h3>
+                  <p className="text-xs text-zinc-600 font-sans font-medium leading-relaxed max-w-xs mx-auto">
+                    {remainingSwipes <= 0
+                      ? "You've used all 10 free daily swipes. Log a learning streak update in the Streak tab to unlock +5 bonus swipes!"
+                      : "You have reviewed all available swapper profiles in your area."}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col gap-2 font-mono text-xs">
+                  {cards.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={handleResetDeck}
+                      className="w-full bg-black hover:bg-[#ff3300] text-white font-bold py-3.5 border-2 border-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000000]"
+                    >
+                      <RefreshCw className="w-4 h-4" /> RELOAD DISCOVERY DECK
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Controls / Action Buttons */}
+          {cards.length > 0 && remainingSwipes > 0 && (
+            <div className="w-full grid grid-cols-2 gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => handleSwipe("left")}
+                className="bg-white hover:bg-black hover:text-white text-black font-mono font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition shadow-[4px_4px_0px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px]"
+              >
+                <X className="w-4 h-4 text-[#ff3300]" /> SKIP [PASS]
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSwipe("right")}
+                className="bg-[#ff3300] hover:bg-black text-white font-mono font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition shadow-[4px_4px_0px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px]"
+              >
+                SWAP [BARTER] <Check className="w-4 h-4 stroke-[3]" />
+              </button>
+            </div>
+          )}
+
+        </main>
+
+        {/* RIGHT SIDEBAR (Desktop Only): Activity Log & Barter Guidelines */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-4 font-mono text-xs">
+          
+          {/* Live Recent Actions */}
+          <div className="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_#000000] space-y-3">
+            <span className="font-bold text-black uppercase block border-b border-black pb-1">
+              [RECENT_SESSION_LOGS]
+            </span>
+
+            {swipeHistory.length > 0 ? (
+              <div className="space-y-2">
+                {swipeHistory.map((item, idx) => (
+                  <div
+                    key={`${item.name}-${idx}`}
+                    className="flex items-center justify-between bg-[#f5f5f5] p-2 border border-black text-[11px]"
+                  >
+                    <span className="font-bold text-black truncate max-w-[120px]">{item.name}</span>
+                    <span
+                      className={`font-bold px-1.5 py-0.5 border text-[9px] ${
+                        item.action === "SWAP"
+                          ? "bg-[#ff3300] text-white border-black"
+                          : "bg-black text-white border-black"
+                      }`}
+                    >
+                      {item.action}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-zinc-500 text-[11px] italic">No swipes in this session yet.</p>
+            )}
+          </div>
+
+          {/* Barter Protocol Guidelines */}
+          <div className="bg-[#f5f5f5] border-2 border-black p-4 shadow-[4px_4px_0px_0px_#000000] space-y-2 font-sans">
+            <span className="font-mono font-bold text-black uppercase block border-b border-black pb-1 text-xs">
+              [BARTER_RULES]
+            </span>
+            <ul className="text-xs text-zinc-700 space-y-1.5 leading-snug">
+              <li className="flex items-start gap-1.5">
+                <span className="font-mono font-bold text-[#ff3300]">•</span>
+                <span>Swiping right sends a barter request.</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="font-mono font-bold text-[#ff3300]">•</span>
+                <span>Mutual right swipes open a 1:1 chat session.</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="font-mono font-bold text-[#ff3300]">•</span>
+                <span>Verify phone OTP before sending first message.</span>
+              </li>
+            </ul>
+          </div>
+
+        </aside>
+
+      </div>
+
+      {/* Celebration Match Modal */}
       {matchedProfile && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-          <div className="bg-white border-2 border-black p-6 max-w-sm w-full space-y-4 shadow-[8px_8px_0px_0px_#ff3300] text-center">
-            <div className="w-12 h-12 bg-[#ff3300] text-white border-2 border-black flex items-center justify-center mx-auto">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl font-black uppercase text-black">MUTUAL SWAP MATCH!</h3>
-              <p className="text-xs text-zinc-600 font-medium">
-                You and <span className="font-bold text-black">{matchedProfile.fullName}</span> both expressed skill swap interest.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMatchedProfile(null);
-                onOpenChatGate();
-              }}
-              className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000000]"
-            >
-              INITIALIZE 1:1 CHAT <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setMatchedProfile(null)}
-              className="font-mono text-xs text-zinc-500 hover:text-black uppercase underline cursor-pointer"
-            >
-              [CONTINUE_SWIPING]
-            </button>
-          </div>
-        </div>
+        <MatchModal
+          matchedProfile={matchedProfile}
+          onClose={() => setMatchedProfile(null)}
+          onOpenChat={() => {
+            setMatchedProfile(null);
+            onOpenChatGate();
+          }}
+        />
       )}
 
     </div>
