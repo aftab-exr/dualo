@@ -5,41 +5,26 @@ import { BlogStreakFeed } from "./components/blog/BlogStreakFeed";
 import { ChatInterface } from "./components/chat/ChatInterface";
 import { ProfilePage } from "./pages/ProfilePage";
 import { PhoneGateModal } from "./components/chat/PhoneGateModal";
-import type { ChatSession } from "./types/chat";
+import { useDualoStore } from "./store/useDualoStore";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"AUTH" | "FEED" | "BLOG" | "CHAT" | "PROFILE">("PROFILE");
+  const [activeTab, setActiveTab] = useState<"AUTH" | "FEED" | "BLOG" | "CHAT" | "PROFILE">("FEED");
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
-  const [chatSession, setChatSession] = useState<ChatSession>({
-    swapId: "swap_101",
-    partnerName: "Elena Rostova",
-    partnerLocation: "Berlin, DE",
-    offeredSkill: "Figma / UI Design",
-    wantedSkill: "Node.js & APIs",
-    isPhoneVerified: false,
-    messages: [
-      {
-        id: "m-1",
-        senderId: "partner",
-        text: "Hey! Saw your Node.js profile on Dualo. Ready to swap for Figma UI Design?",
-        timestamp: "10:14 AM",
-        isMe: false,
-      },
-    ],
-  });
+  // Zustand Global Store State & Actions
+  const { verifyPhone, chatSession } = useDualoStore();
 
   const handleOpenChat = () => {
     setActiveTab("CHAT");
   };
 
   const handlePhoneVerified = () => {
-    setChatSession((prev) => ({ ...prev, isPhoneVerified: true }));
+    verifyPhone();
   };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top Navigation Switcher */}
+      {/* Navigation Switcher Bar */}
       <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-black text-white border-2 border-black p-1 shadow-[4px_4px_0px_0px_#ff3300] flex gap-1 font-mono text-xs uppercase font-bold overflow-x-auto max-w-[95vw]">
         <button
           type="button"
@@ -88,7 +73,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* Active Tab Router */}
+      {/* Active Tab Views */}
       <div className="pt-12">
         {activeTab === "AUTH" && <AuthPage />}
         {activeTab === "FEED" && (
@@ -107,7 +92,7 @@ export default function App() {
         )}
       </div>
 
-      {/* Security Gate Phone Modal */}
+      {/* Global Phone Gate Modal */}
       <PhoneGateModal
         isOpen={isPhoneModalOpen}
         onVerified={handlePhoneVerified}
