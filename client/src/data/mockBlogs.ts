@@ -1,0 +1,40 @@
+import type { BlogPost } from "../types/blog";
+
+export const MOCK_BLOG_POSTS: BlogPost[] = [
+  {
+    id: "b1",
+    authorName: "Elena Rostova",
+    authorHandle: "@elena_design",
+    skillLearned: "Node.js & APIs",
+    title: "Mastered Express Middleware & JWT Auth in 2 Hours",
+    content: "Exchanged 1:1 sessions with Marcus today. He walked me through Request pipeline execution in Express. Built my first working JWT verification middleware from scratch!",
+    createdAt: "2 HOURS AGO",
+    streakCount: 7,
+    likes: 14,
+    hasLiked: false,
+  },
+  {
+    id: "b2",
+    authorName: "Marcus Vance",
+    authorHandle: "@marcus_dev",
+    skillLearned: "Figma & Design Systems",
+    title: "Understanding Auto-Layout & Component Variants",
+    content: "Elena taught me how to structure scalable design tokens in Figma. No more hardcoded pixel values! Applied this directly to my Dualo dashboard wireframes.",
+    createdAt: "5 HOURS AGO",
+    streakCount: 12,
+    likes: 29,
+    hasLiked: true,
+  },
+  {
+    id: "b3",
+    authorName: "Sophia Chen",
+    authorHandle: "@sophia_motion",
+    skillLearned: "React / Next.js",
+    title: "Connecting Framer Motion Layout Animations to React State",
+    content: "Finally understood how AnimatePresence and layoutId work under the hood in React. Managed to build smooth 60fps card transitions without dropped frames.",
+    createdAt: "1 DAY AGO",
+    streakCount: 4,
+    likes: 19,
+    hasLiked: false,
+  },
+];

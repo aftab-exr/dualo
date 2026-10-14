@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fonts */
+  --font-sans: "Archivo", system-ui, sans-serif;
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-cursive: "Instrument Serif", serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Swiss Modern Palette */
+  --color-swiss-white: #ffffff;
+  --color-swiss-black: #000000;
+  --color-swiss-red: #ff3300;       /* Primary Swiss Accent */
+  --color-swiss-light: #f5f5f5;     /* Light Grey Surface */
+  --color-swiss-mid: #cccccc;       /* Border / Divider Grey */
+  --color-swiss-dark: #333333;      /* Dark Surface */
+}
+
+/* Custom Cursive Helper */
+.font-cursive {
+  font-family: var(--font-cursive);
+  font-style: italic;
+}
