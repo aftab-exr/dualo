@@ -2,11 +2,40 @@ import { useState } from "react";
 import { AuthPage } from "./pages/AuthPage";
 import { SwipeFeed } from "./components/feed/SwipeFeed";
 import { BlogStreakFeed } from "./components/blog/BlogStreakFeed";
+import { ChatInterface } from "./components/chat/ChatInterface";
 import { PhoneGateModal } from "./components/chat/PhoneGateModal";
+import type { ChatSession } from "./types/chat";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"AUTH" | "FEED" | "BLOG">("FEED");
+  const [activeTab, setActiveTab] = useState<"AUTH" | "FEED" | "BLOG" | "CHAT">("FEED");
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+
+  // Active Chat Session State
+  const [chatSession, setChatSession] = useState<ChatSession>({
+    swapId: "swap_101",
+    partnerName: "Elena Rostova",
+    partnerLocation: "Berlin, DE",
+    offeredSkill: "Figma / UI Design",
+    wantedSkill: "Node.js & APIs",
+    isPhoneVerified: false, // Locked until phone is verified
+    messages: [
+      {
+        id: "m-1",
+        senderId: "partner",
+        text: "Hey! Saw your Node.js profile on Dualo. Ready to swap for Figma UI Design?",
+        timestamp: "10:14 AM",
+        isMe: false,
+      },
+    ],
+  });
+
+  const handleOpenChat = () => {
+    setActiveTab("CHAT");
+  };
+
+  const handlePhoneVerified = () => {
+    setChatSession((prev) => ({ ...prev, isPhoneVerified: true }));
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -39,21 +68,37 @@ export default function App() {
         >
           03_STREAK
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("CHAT")}
+          className={`px-3 py-1.5 transition cursor-pointer ${
+            activeTab === "CHAT" ? "bg-[#ff3300] text-white" : "hover:bg-zinc-800 text-zinc-400"
+          }`}
+        >
+          04_CHAT
+        </button>
       </div>
 
-      {/* Main View Area */}
+      {/* Main View Routing */}
       <div className="pt-12">
         {activeTab === "AUTH" && <AuthPage />}
         {activeTab === "FEED" && (
-          <SwipeFeed onOpenChatGate={() => setIsPhoneModalOpen(true)} />
+          <SwipeFeed onOpenChatGate={handleOpenChat} />
         )}
         {activeTab === "BLOG" && <BlogStreakFeed />}
+        {activeTab === "CHAT" && (
+          <ChatInterface
+            session={chatSession}
+            onBack={() => setActiveTab("FEED")}
+            onUnlockPhone={() => setIsPhoneModalOpen(true)}
+          />
+        )}
       </div>
 
-      {/* Phone Gate Modal */}
+      {/* Global Security Gate Phone Modal */}
       <PhoneGateModal
         isOpen={isPhoneModalOpen}
-        onVerified={() => alert("Phone Verified! Chat unlocked.")}
+        onVerified={handlePhoneVerified}
         onClose={() => setIsPhoneModalOpen(false)}
       />
     </div>
