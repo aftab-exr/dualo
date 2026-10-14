@@ -26,3 +26,6 @@ dist-ssr
 
 .env
 .env.*
+DESIGN.md
+text.md
+*.md
