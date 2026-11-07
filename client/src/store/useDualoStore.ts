@@ -43,6 +43,10 @@ const INITIAL_CHAT: ChatSession = {
   partnerSkill: "Figma / UI Design",
   mySkill: "React / Next.js",
   isLocked: true,
+  isPhoneVerified: false,
+  partnerLocation: "San Francisco, US",
+  offeredSkill: "React / Next.js",
+  wantedSkill: "Figma / UI Design",
   messages: [
     {
       id: "m1",

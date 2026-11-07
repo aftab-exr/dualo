@@ -3,7 +3,7 @@ import { Lock, ShieldCheck, ArrowRight, X } from "lucide-react";
 
 interface PhoneGateModalProps {
   isOpen: boolean;
-  onVerified: () => void;
+  onVerified: (phone: string) => void;
   onClose: () => void;
 }
 
@@ -91,7 +91,7 @@ export const PhoneGateModal: React.FC<PhoneGateModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                onVerified();
+                onVerified(phone);
                 onClose();
               }}
               disabled={otp.length < 6}

@@ -13,4 +13,8 @@ export interface ChatSession {
   mySkill: string;
   isLocked: boolean;
   messages: ChatMessage[];
+  isPhoneVerified: boolean;
+  partnerLocation: string;
+  offeredSkill: string;
+  wantedSkill: string;
 }
