@@ -1,43 +1,102 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuthStore } from './store/useAuthStore';
-import { LandingPage } from './pages/LandingPage';
-import { AuthPage } from './pages/AuthPage';
+import { BottomNav } from './components/BottomNav';
 import { SwipeScreen } from './screens/SwipeScreen';
-import { ChatScreen } from './screens/ChatScreen';
-import { ProfilePage } from './pages/ProfilePage';
-import { StreaksScreen } from './screens/StreaksScreen';
 import { MatchesScreen } from './screens/MatchesScreen';
+import { ChatScreen } from './screens/ChatScreen';
+import { StreaksScreen } from './screens/StreaksScreen';
+import { ProfileScreen } from './screens/ProfileScreen';
+import { LoginScreen } from './screens/LoginScreen';
+import { RegisterScreen } from './screens/RegisterScreen';
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/auth" replace />;
-}
+// Protected Route Guard Component
+const ProtectedLayout: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuthStore();
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-slate-950 text-white">
-        <Routes>
-          <Route path="/" element={<LandingPage onGetStarted={() => {}} onExploreFeed={() => {}} />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route element={<PrivateRoute><SwipeScreen /></PrivateRoute>}>
-            <Route path="/swipe" element={<SwipeScreen />} />
-          </Route>
-          <Route element={<PrivateRoute><ChatScreen /></PrivateRoute>}>
-            <Route path="/chat/:matchId" element={<ChatScreen />} />
-          </Route>
-          <Route element={<PrivateRoute><MatchesScreen /></PrivateRoute>}>
-            <Route path="/matches" element={<MatchesScreen />} />
-          </Route>
-          <Route element={<PrivateRoute><StreaksScreen /></PrivateRoute>}>
-            <Route path="/streaks" element={<StreaksScreen />} />
-          </Route>
-          <Route element={<PrivateRoute><ProfilePage onOpenPhoneGate={() => {}} /></PrivateRoute>}>
-            <Route path="/profile" element={<ProfilePage onOpenPhoneGate={() => {}} />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/swipe" replace />} />
-        </Routes>
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+        <p className="text-slate-400 text-xs font-medium">Verifying session...</p>
       </div>
-    </BrowserRouter>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
+      <Outlet />
+      <BottomNav />
+    </div>
   );
-}
+};
+
+// Public Route Guard (Redirects logged-in users away from auth screens)
+const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+export const App: React.FC = () => {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  return (
+    <Router>
+      <Routes>
+        {/* Public Auth Routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginScreen />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <RegisterScreen />
+            </PublicOnlyRoute>
+          }
+        />
+
+        {/* Protected App Routes */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/" element={<SwipeScreen />} />
+          <Route path="/matches" element={<MatchesScreen />} />
+          <Route path="/chat/:matchId" element={<ChatScreen />} />
+          <Route path="/streaks" element={<StreaksScreen />} />
+          <Route path="/profile" element={<ProfileScreen />} />
+        </Route>
+
+        {/* Catch-all Redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;
