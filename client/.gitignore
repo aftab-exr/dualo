@@ -17,6 +17,7 @@ android/*.iml
 android/app/*.iml
 android/local.properties
 dualo-release-key.jks
+key.properties
 *.apk
 *.aab
 
