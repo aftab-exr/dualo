@@ -5,7 +5,7 @@ import { AuthPage } from './pages/AuthPage';
 import { SwipeScreen } from './screens/SwipeScreen';
 import { ChatScreen } from './screens/ChatScreen';
 import { ProfilePage } from './pages/ProfilePage';
-import { StreakScreen } from './screens/StreakScreen';
+import { StreaksScreen } from './screens/StreaksScreen';
 import { MatchesScreen } from './screens/MatchesScreen';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -29,8 +29,8 @@ export default function App() {
           <Route element={<PrivateRoute><MatchesScreen /></PrivateRoute>}>
             <Route path="/matches" element={<MatchesScreen />} />
           </Route>
-          <Route element={<PrivateRoute><StreakScreen /></PrivateRoute>}>
-            <Route path="/streaks" element={<StreakScreen />} />
+          <Route element={<PrivateRoute><StreaksScreen /></PrivateRoute>}>
+            <Route path="/streaks" element={<StreaksScreen />} />
           </Route>
           <Route element={<PrivateRoute><ProfilePage onOpenPhoneGate={() => {}} /></PrivateRoute>}>
             <Route path="/profile" element={<ProfilePage onOpenPhoneGate={() => {}} />} />
