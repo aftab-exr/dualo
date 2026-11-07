@@ -6,6 +6,11 @@ interface UserProfile {
   email: string;
   fullName: string;
   handle: string;
+  headline?: string;
+  bio?: string;
+  location?: string;
+  isPhoneVerified: boolean;
+  phoneNumber?: string;
   streakDays: number;
   totalSwaps: number;
   remainingSwipes: number;
