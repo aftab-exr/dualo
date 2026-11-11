@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Flame, 
@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import type { BlogPost, UserStreak } from "../../types/blog";
 import { MOCK_BLOG_POSTS } from "../../data/mockBlogs";
+import { api } from "../../services/api";
+import { useAuthStore } from "../../store/useAuthStore";
+import { useDualoStore } from "../../store/useDualoStore";
 
 const DAYS_OF_WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -20,10 +23,37 @@ export const BlogStreakFeed: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    async function loadBackendStreaks() {
+      try {
+        const data = await api.get<any[]>("/streaks");
+        if (data && data.length > 0) {
+          const mapped: BlogPost[] = data.map((p, idx) => ({
+            id: p.id,
+            authorName: p.author?.fullName || "Dualo Member",
+            authorHandle: p.author?.handle ? (p.author.handle.startsWith("@") ? p.author.handle : `@${p.author.handle}`) : "@member",
+            skillLearned: p.skillTag || "General",
+            title: p.title,
+            content: p.content,
+            createdAt: new Date(p.createdAt).toLocaleDateString([], { month: "short", day: "numeric" }),
+            streakCount: 3 + idx,
+            likes: 1,
+            hasLiked: false,
+          }));
+          setPosts(mapped);
+        }
+      } catch {
+        // Fallback to MOCK_BLOG_POSTS
+      }
+    }
+    loadBackendStreaks();
+  }, []);
+
   // User Streak State
+  const initialStreak = useDualoStore.getState().streak?.currentStreak || 7;
   const [streak, setStreak] = useState<UserStreak>({
-    currentStreak: 7,
-    longestStreak: 12,
+    currentStreak: initialStreak,
+    longestStreak: Math.max(initialStreak, 12),
     bonusSwipesEarned: 5,
     hasLoggedToday: false,
     weeklyLogHistory: [true, true, true, true, true, true, false], // Sun is today
@@ -50,14 +80,18 @@ export const BlogStreakFeed: React.FC = () => {
     );
   };
 
-  const handleCreateLog = (e: React.FormEvent) => {
+  const handleCreateLog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
 
+    const user = useAuthStore.getState().user;
+    const authorName = user?.fullName || "You";
+    const authorHandle = user?.handle ? (user.handle.startsWith("@") ? user.handle : `@${user.handle}`) : "@you";
+
     const createdPost: BlogPost = {
       id: `b-${Date.now()}`,
-      authorName: "You (Alex)",
-      authorHandle: "@alex_swapper",
+      authorName: authorName,
+      authorHandle: authorHandle,
       skillLearned: newSkill,
       title: newTitle.trim(),
       content: newContent.trim(),
@@ -69,6 +103,18 @@ export const BlogStreakFeed: React.FC = () => {
 
     // Update posts feed
     setPosts([createdPost, ...posts]);
+
+    // Send to backend
+    try {
+      await api.post("/streaks", {
+        title: newTitle.trim(),
+        content: newContent.trim(),
+        skillTag: newSkill,
+      });
+      useDualoStore.getState().incrementStreak();
+    } catch {
+      useDualoStore.getState().incrementStreak();
+    }
 
     // Increment user streak and award +5 swipes
     setStreak((prev: UserStreak) => {

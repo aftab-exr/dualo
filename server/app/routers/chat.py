@@ -81,7 +81,8 @@ async def get_user_matches(
             bio=p.bio,
             location=p.location,
             skillsOffered=offered,
-            skillsWanted=wanted
+            skillsWanted=wanted,
+            avatarUrl=p.avatar_url
         )
 
         # Get last message in match
@@ -172,9 +173,12 @@ async def websocket_chat_endpoint(
     try:
         while True:
             data_text = await websocket.receive_text()
-            data = json.loads(data_text)
-            text_content = data.get("text", "").strip()
+            try:
+                data = json.loads(data_text)
+            except Exception:
+                continue
 
+            text_content = data.get("text", "").strip()
             if not text_content:
                 continue
 
@@ -201,4 +205,8 @@ async def websocket_chat_endpoint(
             await manager.broadcast_to_match(match_id, msg_payload)
 
     except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
         manager.disconnect(match_id, websocket)

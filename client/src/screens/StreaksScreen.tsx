@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flame, Plus, Sparkles, X, BookOpen, Clock, Loader2, CheckCircle2 } from 'lucide-react';
+import { Flame, Plus, Sparkles, X, BookOpen, Clock, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -24,7 +24,6 @@ export const StreaksScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Modal & Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [skillTag, setSkillTag] = useState('');
@@ -39,7 +38,7 @@ export const StreaksScreen: React.FC = () => {
       const data = await api.get<StreakPost[]>('/streaks');
       setPosts(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load community streaks');
+      setError(err.message || 'FAILED TO LOAD COMMUNITY STREAKS');
     } finally {
       setLoading(false);
     }
@@ -66,14 +65,13 @@ export const StreaksScreen: React.FC = () => {
       setSkillTag('');
       setContent('');
       setIsModalOpen(false);
-      setRewardMessage('Streak logged! +5 Bonus Swipes added to your quota 🎉');
+      setRewardMessage('STREAK LOGGED! +5 BONUS SWIPES ADDED TO YOUR QUOTA');
 
-      // Refresh user profile in Zustand store to reflect updated streakDays & remainingSwipes
       await checkAuth();
 
       setTimeout(() => setRewardMessage(null), 5000);
     } catch (err: any) {
-      alert(err.message || 'Failed to submit streak post');
+      alert(err.message || 'FAILED TO SUBMIT STREAK POST');
     } finally {
       setSubmitting(false);
     }
@@ -90,100 +88,92 @@ export const StreaksScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-white max-w-md mx-auto pb-24 select-none">
-      {/* Header */}
-      <header className="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10">
+    <div className="flex flex-col min-h-screen bg-white text-black max-w-md mx-auto pb-24 select-none">
+      <header className="p-4 bg-white border-b-4 border-black sticky top-0 z-10">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-              <span>Learning Streaks</span>
-              <Flame className="w-5 h-5 text-amber-500 fill-amber-500/20" />
+            <h1 className="font-cursive text-2xl font-extrabold text-[#E60023] tracking-tight flex items-center gap-2">
+              <span>LEARNING STREAKS</span>
+              <Flame className="w-5 h-5 text-[#E60023]" />
             </h1>
-            <p className="text-xs text-slate-400">Share proof of learning & earn bonus swipes</p>
+            <p className="font-modern font-bold text-xs uppercase text-black">SHARE PROOF OF LEARNING & EARN BONUS SWIPES</p>
           </div>
 
-          {/* User Streak Counter Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs">
-            <Flame className="w-4 h-4 fill-amber-400" />
-            <span>{user?.streakDays || 0} Days</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E60023] text-white border-2 border-black font-modern font-black text-xs uppercase">
+            <Flame className="w-4 h-4" />
+            <span>{user?.streakDays || 0} DAYS</span>
           </div>
         </div>
 
-        {/* Log Streak Trigger Button */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#E60023] hover:bg-red-dark text-white font-modern font-black text-sm shadow-max-black transition-all active:scale-[0.98]"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
-          Log Daily Learning Proof (+5 Swipes)
+          LOG DAILY LEARNING PROOF (+5 SWIPES)
         </button>
       </header>
 
-      {/* Reward Alert */}
       {rewardMessage && (
-        <div className="m-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in">
+        <div className="m-4 p-3.5 bg-[#E60023] text-white border-3 border-black rounded-2xl flex items-center gap-3 text-xs font-modern font-black uppercase shadow-max-black animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span>{rewardMessage}</span>
         </div>
       )}
 
-      {/* Community Feed List */}
       <main className="flex-1 p-4 space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-3" />
-            <p className="text-slate-400 text-xs">Fetching community proof feed...</p>
+            <div className="w-8 h-8 border-4 border-[#E60023] border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="font-modern font-bold text-xs uppercase text-black">FETCHING COMMUNITY PROOF FEED...</p>
           </div>
         ) : error ? (
-          <div className="text-center py-10 bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
-            <p className="text-rose-400 text-sm mb-4">{error}</p>
+          <div className="text-center py-10 bg-white border-4 border-[#E60023] rounded-3xl p-6">
+            <p className="font-modern font-black text-xs uppercase text-[#E60023] mb-4">{error}</p>
             <button
               onClick={fetchStreaks}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-xl bg-black hover:bg-slate-900 text-white font-modern font-black text-xs uppercase transition-colors"
             >
-              Try Again
+              TRY AGAIN
             </button>
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-slate-900/30 border border-slate-800/60 rounded-3xl">
-            <BookOpen className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-white mb-1">No Proof Posts Yet</h3>
-            <p className="text-slate-400 text-xs max-w-xs mx-auto mb-4">
-              Be the first in the Dualo community to share what you learned today!
+          <div className="text-center py-16 px-4 bg-white border-4 border-[#E60023] rounded-3xl shadow-max-red">
+            <BookOpen className="w-12 h-12 text-black mx-auto mb-3" />
+            <h3 className="font-cursive text-xl font-extrabold text-[#E60023] mb-1">NO PROOF POSTS YET</h3>
+            <p className="font-modern font-bold text-xs uppercase text-black max-w-xs mx-auto mb-4">
+              BE THE FIRST IN THE DUALO COMMUNITY TO SHARE WHAT YOU LEARNED TODAY!
             </p>
           </div>
         ) : (
           posts.map((post) => (
             <div
               key={post.id}
-              className="p-4 bg-slate-900/70 border border-slate-800/80 rounded-2xl space-y-2.5 shadow-sm"
+              className="p-4 bg-white border-3 border-black rounded-2xl space-y-2.5 shadow-max-red"
             >
-              {/* Author Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-slate-950 font-bold text-sm shadow-sm">
+                  <div className="w-9 h-9 rounded-xl bg-[#E60023] flex items-center justify-center text-white font-modern font-extrabold text-sm shadow-max-black">
                     {post.author.fullName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-xs">{post.author.fullName}</h4>
-                    <p className="text-[11px] text-slate-400">@{post.author.handle}</p>
+                    <h4 className="font-cursive text-xs font-extrabold text-[#E60023]">{post.author.fullName}</h4>
+                    <p className="font-modern font-black text-[11px] uppercase text-black">@{post.author.handle}</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span className="px-2.5 py-1 rounded-md text-[10px] font-modern font-extrabold uppercase bg-[#E60023] text-white border-2 border-black">
                   #{post.skillTag}
                 </span>
               </div>
 
-              {/* Post Title & Content */}
               <div>
-                <h3 className="font-bold text-slate-100 text-sm mb-1">{post.title}</h3>
-                <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line">
+                <h3 className="font-cursive text-sm font-extrabold text-[#E60023] mb-1">{post.title}</h3>
+                <p className="font-modern text-xs font-bold text-black leading-relaxed whitespace-pre-line">
                   {post.content}
                 </p>
               </div>
 
-              {/* Timestamp */}
-              <div className="flex items-center gap-1 text-[10px] text-slate-500 pt-1 border-t border-slate-800/60">
+              <div className="flex items-center gap-1 font-modern text-[10px] uppercase text-black pt-1 border-t-2 border-black">
                 <Clock className="w-3 h-3" />
                 <span>{formatTime(post.createdAt)}</span>
               </div>
@@ -192,81 +182,80 @@ export const StreaksScreen: React.FC = () => {
         )}
       </main>
 
-      {/* Modal Form for Logging Streak */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
+          <div className="relative w-full max-w-md bg-white border-4 border-[#E60023] rounded-3xl p-6 shadow-max-black">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/60 transition-colors"
+              className="absolute top-4 right-4 p-2 bg-black text-white border-2 border-[#E60023] rounded-full hover:bg-[#E60023] transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[3]" />
             </button>
 
-            <div className="flex items-center gap-2 mb-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-              <Sparkles className="w-4 h-4" />
-              <span>Daily Learning Proof</span>
+            <div className="inline-flex items-center gap-1.5 px-4 py-1 bg-[#E60023] text-white border-2 border-black font-modern font-black text-xs uppercase tracking-widest mb-2">
+              <Sparkles className="w-4 h-4 fill-white" />
+              <span>DAILY LEARNING PROOF</span>
             </div>
-            <h2 className="text-xl font-black text-white mb-1">Log Today's Progress</h2>
-            <p className="text-slate-400 text-xs mb-5">
-              Publish a breakdown of what you studied or practiced to extend your streak and receive +5 extra swipes.
+            <h2 className="font-cursive text-2xl font-extrabold text-[#E60023] leading-none mb-1">LOG TODAY'S PROGRESS</h2>
+            <p className="font-modern font-bold text-xs uppercase text-black mb-5">
+              PUBLISH A BREAKDOWN OF WHAT YOU STUDIED TO EXTEND YOUR STREAK AND RECEIVE +5 EXTRA SWIPES.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Skill Tag
+                <label className="block font-modern font-black text-xs uppercase text-[#E60023] mb-1">
+                  SKILL TAG
                 </label>
                 <input
                   type="text"
                   value={skillTag}
                   onChange={(e) => setSkillTag(e.target.value)}
-                  placeholder="e.g. React, Python, UI Design"
+                  placeholder="E.G. REACT, PYTHON, UI DESIGN"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full bg-white border-3 border-black rounded-xl px-3.5 py-2.5 text-sm font-modern font-bold text-black placeholder-slate-400 focus:outline-none focus:border-[#E60023] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Headline / What you learned
+                <label className="block font-modern font-black text-xs uppercase text-[#E60023] mb-1">
+                  HEADLINE / WHAT YOU LEARNED
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Mastered Framer Motion Gestures"
+                  placeholder="E.G. MASTERED FRAMER MOTION GESTURES"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full bg-white border-3 border-black rounded-xl px-3.5 py-2.5 text-sm font-modern font-bold text-black placeholder-slate-400 focus:outline-none focus:border-[#E60023] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Key Takeaways / Proof Notes
+                <label className="block font-modern font-black text-xs uppercase text-[#E60023] mb-1">
+                  KEY TAKEAWAYS / PROOF NOTES
                 </label>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write a brief overview of key insights or challenges solved..."
+                  placeholder="WRITE A BRIEF OVERVIEW OF KEY INSIGHTS OR CHALLENGES SOLVED..."
                   rows={4}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors resize-none"
+                  className="w-full bg-white border-3 border-black rounded-xl px-3.5 py-2.5 text-sm font-modern font-bold text-black placeholder-slate-400 focus:outline-none focus:border-[#E60023] transition-colors resize-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#E60023] hover:bg-red-dark text-white font-modern font-black text-sm shadow-max-black transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Publishing...</span>
+                    <RotateCcw className="w-4 h-4 animate-spin" />
+                    <span>PUBLISHING...</span>
                   </>
                 ) : (
-                  <span>Publish & Claim +5 Swipes</span>
+                  <span>PUBLISH & CLAIM +5 SWIPES</span>
                 )}
               </button>
             </form>

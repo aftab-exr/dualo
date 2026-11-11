@@ -2,19 +2,109 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from datetime import datetime
 from app.database import get_db
 from app.models import User, Profile, UserSkill
 from app.schemas import UserRegisterRequest, UserLoginRequest, PhoneVerifyRequest, AuthResponse, UserProfileResponse
 from app.security import hash_password, verify_password, create_access_token
 from app.dependencies import get_current_user
+import firebase_admin
+from firebase_admin import auth as firebase_auth
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
+
+# Initialize Firebase Admin SDK once
+if not firebase_admin._apps:
+    firebase_admin.initialize_app()
+
+@router.post("/google", response_model=AuthResponse)
+async def google_auth(
+    body: dict,
+    db: AsyncSession = Depends(get_db)
+):
+    id_token = body.get("idToken")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="ID token required")
+    
+    # Verify Firebase ID token using Admin SDK with fallback to Google tokeninfo
+    decoded_token = None
+    try:
+        decoded_token = firebase_auth.verify_id_token(id_token)
+    except Exception:
+        # Fallback to Google OAuth tokeninfo validation
+        try:
+            import urllib.request
+            import json
+            req = urllib.request.Request(f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode())
+                    if "email" in data:
+                        decoded_token = data
+        except Exception:
+            pass
+
+    if not decoded_token:
+        raise HTTPException(status_code=401, detail="Invalid Firebase ID token")
+    
+    email = decoded_token.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not found in token")
+    
+    full_name = decoded_token.get("name", "")
+    picture = decoded_token.get("picture", "")
+    
+    # Check if user exists
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.profile).selectinload(Profile.skills))
+        .filter(User.email == email)
+    )
+    user = result.scalars().first()
+    
+    if not user:
+        # Create new user
+        new_user = User(email=email)
+        db.add(new_user)
+        await db.flush()
+        
+        # Generate unique handle
+        base_handle = email.split("@")[0].replace(".", "_")
+        handle = base_handle
+        counter = 1
+        while True:
+            existing = await db.execute(select(Profile).filter(Profile.handle == handle))
+            if not existing.scalars().first():
+                break
+            handle = f"{base_handle}{counter}"
+            counter += 1
+        
+        new_profile = Profile(
+            user_id=new_user.id,
+            full_name=full_name,
+            handle=handle,
+            bio=f"Google user since {datetime.utcnow().strftime('%Y')}",
+            avatar_url=picture,
+        )
+        db.add(new_profile)
+        await db.commit()
+        
+        result = await db.execute(
+            select(User)
+            .options(selectinload(User.profile).selectinload(Profile.skills))
+            .filter(User.id == new_user.id)
+        )
+        user = result.scalars().first()
+    
+    token = create_access_token(user.id)
+    return AuthResponse(token=token, user=build_profile_response(user))
+
 
 def build_profile_response(user: User) -> UserProfileResponse:
     profile = user.profile
     offered = [s.skill_name for s in profile.skills if s.type == "OFFERED"]
     wanted = [s.skill_name for s in profile.skills if s.type == "WANTED"]
-    
+
     return UserProfileResponse(
         id=user.id,
         email=user.email,
@@ -29,7 +119,8 @@ def build_profile_response(user: User) -> UserProfileResponse:
         totalSwaps=profile.total_swaps,
         remainingSwipes=profile.remaining_swipes,
         skillsOffered=offered,
-        skillsWanted=wanted
+        skillsWanted=wanted,
+        avatarUrl=profile.avatar_url
     )
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)

@@ -43,3 +43,6 @@ ehthumbs.db
 Desktop.inivenv/
 .env
 venv/
+
+# Redis
+dump.rdb

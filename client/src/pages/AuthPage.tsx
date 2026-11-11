@@ -12,6 +12,8 @@ import {
 import type { AuthStep, AuthMethod, AuthFormData } from "../types/auth";
 import { CountrySelector } from "../components/ui/CountrySelector";
 import { COUNTRIES, type Country } from "../data/countries";
+import { signInWithGoogle } from "../services/firebase";
+import { useAuthStore } from "../hooks/useAuthStore";
 
 const POPULAR_SKILLS = [
   "React / Next.js",
@@ -26,7 +28,11 @@ const POPULAR_SKILLS = [
   "Mobile Apps",
 ];
 
-export const AuthPage: React.FC = () => {
+interface AuthPageProps {
+  onCompleteAuth?: () => void;
+}
+
+export const AuthPage: React.FC<AuthPageProps> = ({ onCompleteAuth }) => {
   const [step, setStep] = useState<AuthStep>("METHOD_SELECT");
   const [direction, setDirection] = useState<number>(1);
   const [country, setCountry] = useState<Country>(COUNTRIES[0]);
@@ -74,7 +80,7 @@ export const AuthPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] bg-white text-black flex flex-col justify-between items-center p-4 md:p-6 font-sans selection:bg-[#ff3300] selection:text-white border-x-2 border-black max-w-lg mx-auto">
-      
+     
       {/* Swiss Header Bar */}
       <header className="w-full border-b-2 border-black pb-4 space-y-1">
         <div className="flex items-baseline justify-between">
@@ -92,7 +98,7 @@ export const AuthPage: React.FC = () => {
 
       {/* Auth Card Shell with Visible Grid & Offset Shadow */}
       <main className="w-full bg-white border-2 border-black p-6 md:p-8 my-auto shadow-[6px_6px_0px_0px_#000000] relative overflow-hidden">
-        
+       
         {/* Step Indicator Header */}
         <div className="flex justify-between items-center mb-6 border-b-2 border-black pb-4 font-mono text-xs">
           <div className="flex gap-1.5">
@@ -124,18 +130,17 @@ export const AuthPage: React.FC = () => {
               <MethodSelectStep
                 onSelectMethod={(method) => {
                   updateFormData({ method });
-                  if (method === "GOOGLE") {
-                    updateFormData({ 
-                      fullName: "Google User", 
-                      email: "user@gmail.com",
-                      isPhoneVerified: false 
-                    });
-                    goToNextStep("PROFILE_SKILLS");
-                  } else if (method === "EMAIL") {
+                  if (method === "EMAIL") {
                     goToNextStep("EMAIL_INPUT");
                   } else if (method === "PHONE") {
                     goToNextStep("PHONE_INPUT");
                   }
+                }}
+                onGoogleSignIn={async () => {
+                  const idToken = await signInWithGoogle();
+                  await useAuthStore.getState().loginWithGoogle(idToken);
+                  // Navigate to profile skills step after successful Google auth
+                  setStep("PROFILE_SKILLS");
                 }}
               />
             )}
@@ -178,9 +183,27 @@ export const AuthPage: React.FC = () => {
                 formData={formData}
                 updateFormData={updateFormData}
                 onBack={() => goToPrevStep("METHOD_SELECT")}
-                onSubmit={() => {
-                  alert(`Registration Complete! Phone Verified: ${formData.isPhoneVerified ? "YES" : "NO"}`);
-                  console.log("Swiss Dualo User Payload:", formData);
+                onSubmit={async () => {
+                  try {
+                    if (formData.method === "EMAIL" && formData.email) {
+                      const handle = formData.email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_");
+                      await useAuthStore.getState().registerWithEmail({
+                        email: formData.email,
+                        password: "Password123!",
+                        fullName: formData.fullName || handle,
+                        handle: handle,
+                        skillsOffered: formData.skillsOffered,
+                        skillsWanted: formData.skillsWanted,
+                      });
+                    }
+                  } catch (err) {
+                    console.warn("Auth sync note:", err);
+                  }
+                  if (onCompleteAuth) {
+                    onCompleteAuth();
+                  } else {
+                    alert(`Registration Complete! Phone Verified: ${formData.isPhoneVerified ? "YES" : "NO"}`);
+                  }
                 }}
               />
             )}
@@ -203,9 +226,23 @@ export const AuthPage: React.FC = () => {
  * ============================================================================ */
 interface MethodSelectProps {
   onSelectMethod: (method: AuthMethod) => void;
+  onGoogleSignIn: () => Promise<void>;
 }
 
-const MethodSelectStep: React.FC<MethodSelectProps> = ({ onSelectMethod }) => {
+const MethodSelectStep: React.FC<MethodSelectProps> = ({ onSelectMethod, onGoogleSignIn }) => {
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await onGoogleSignIn();
+    } catch (error: any) {
+      alert(error.message || 'Google sign-in failed');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-1 mb-6 border-l-4 border-[#ff3300] pl-3 py-0.5">
@@ -219,14 +256,22 @@ const MethodSelectStep: React.FC<MethodSelectProps> = ({ onSelectMethod }) => {
 
       <button
         type="button"
-        onClick={() => onSelectMethod("GOOGLE")}
-        className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 px-4 border-2 border-black flex items-center justify-between text-xs uppercase tracking-wider transition-colors duration-150 cursor-pointer shadow-[3px_3px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+        onClick={handleGoogleSignIn}
+        disabled={isGoogleLoading}
+        className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 px-4 border-2 border-black flex items-center justify-between text-xs uppercase tracking-wider transition-colors duration-150 cursor-pointer shadow-[3px_3px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
           CONTINUE WITH GOOGLE
         </span>
-        <ArrowRight className="w-4 h-4" />
+        {isGoogleLoading ? (
+          <span className="flex items-center gap-2">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+            SIGNING IN...
+          </span>
+        ) : (
+          <ArrowRight className="w-4 h-4" />
+        )}
       </button>
 
       <button
@@ -506,7 +551,7 @@ const ProfileSkillsStep: React.FC<ProfileSkillsProps> = ({ formData, updateFormD
 
       {/* Skills Offered Grid */}
       <div className="space-y-1.5">
-        <label className="font-mono text-[10px] font-bold text-black uppercase tracking-widest block">
+        <label className="font-mono text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">
           [OFFERING / CAPABILITY]
         </label>
         <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">

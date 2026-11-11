@@ -20,6 +20,7 @@ interface DualoStore {
   verifyPhone: (phone: string) => void;
   incrementStreak: () => void;
   updateProfile: (updated: Partial<UserProfile>) => void;
+  setChatSession: (session: ChatSession) => void;
 }
 
 const INITIAL_PROFILE: UserProfile = {
@@ -38,8 +39,8 @@ const INITIAL_PROFILE: UserProfile = {
 };
 
 const INITIAL_CHAT: ChatSession = {
+  swapId: "swap_1",
   partnerName: "Elena Rostova",
-  partnerHandle: "@elena_design",
   partnerSkill: "Figma / UI Design",
   mySkill: "React / Next.js",
   isLocked: true,
@@ -107,6 +108,9 @@ export const useDualoStore = create<DualoStore>()(
         set((state) => ({
           profile: { ...state.profile, ...updated },
         })),
+
+      setChatSession: (session) =>
+        set({ chatSession: session }),
     }),
     {
       name: "dualo-app-storage",

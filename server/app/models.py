@@ -14,7 +14,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=lambda: f"usr_{uuid.uuid4().hex[:12]}")
     email = Column(String, unique=True, nullable=False, index=True)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     profile = relationship("Profile", back_populates="user", uselist=False)
@@ -35,6 +35,7 @@ class Profile(Base):
     total_swaps = Column(Integer, default=0)
     remaining_swipes = Column(Integer, default=10)
     last_streak_date = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
 
     user = relationship("User", back_populates="profile")
     skills = relationship("UserSkill", back_populates="profile", cascade="all, delete-orphan")

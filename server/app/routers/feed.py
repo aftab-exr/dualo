@@ -49,7 +49,8 @@ async def get_feed(
                 bio=profile.bio,
                 location=profile.location,
                 skillsOffered=offered,
-                skillsWanted=wanted
+                skillsWanted=wanted,
+                avatarUrl=profile.avatar_url
             )
         )
     return feed

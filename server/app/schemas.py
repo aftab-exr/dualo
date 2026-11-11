@@ -49,6 +49,7 @@ class UserProfileResponse(BaseModel):
     remainingSwipes: int
     skillsOffered: List[str] = []
     skillsWanted: List[str] = []
+    avatarUrl: Optional[str] = None
 
 class AuthResponse(BaseModel):
     token: str
@@ -62,6 +63,7 @@ class FeedUserResponse(BaseModel):
     location: Optional[str] = None
     skillsOffered: List[str] = []
     skillsWanted: List[str] = []
+    avatarUrl: Optional[str] = None
 
 class SwipeRequest(BaseModel):
     targetUserId: str

@@ -34,7 +34,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="min-h-[100dvh] bg-white text-black flex flex-col justify-between items-center p-4 md:p-6 font-sans selection:bg-[#ff3300] selection:text-white border-x-2 border-black max-w-lg mx-auto">
-      
+     
       {/* Active Swap Header */}
       <header className="w-full border-b-2 border-black pb-3 space-y-2">
         <div className="flex items-center justify-between">
@@ -84,7 +84,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Message Feed Area */}
       <main className="w-full my-auto py-4 flex-1 overflow-y-auto space-y-3 relative min-h-[360px] max-h-[500px] pr-1">
-        
+       
         {/* Security Gate Overlay if Phone is Unverified */}
         {!session.isPhoneVerified && (
           <div className="absolute inset-0 bg-white/95 backdrop-blur-xs border-2 border-black p-6 flex flex-col justify-center items-center text-center space-y-4 z-20 shadow-[6px_6px_0px_0px_#000000]">
@@ -136,6 +136,60 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           </div>
         ))}
+
+        {/* Security Gate Overlay if Phone is Unverified */}
+        {!session.isPhoneVerified && (
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-xs border-2 border-black p-6 flex flex-col justify-center items-center text-center space-y-4 z-20 shadow-[6px_6px_0px_0px_#000000]">
+            <div className="w-12 h-12 bg-black text-white border-2 border-black flex items-center justify-center">
+              <Lock className="w-6 h-6 text-[#ff3300]" />
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-lg font-black uppercase text-black">
+                1:1 CHAT LOCKED
+              </h2>
+              <p className="text-xs text-zinc-600 font-medium max-w-xs leading-relaxed">
+                To prevent bots and spam, phone OTP verification is required before initiating 1:1 skill exchanges.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onUnlockPhone}
+              className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_#000000]"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              VERIFY PHONE TO UNLOCK CHAT
+            </button>
+          </div>
+        )}
+
+        {/* Timestamped Message Bubbles */}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex flex-col max-w-[80%] space-y-1 ${
+              msg.isMe ? "ml-auto items-end" : "mr-auto items-start"
+            }`}
+          >
+            <div
+              className={`p-3 border-2 border-black font-sans text-xs leading-relaxed font-medium shadow-[2px_2px_0px_0px_#000000] ${
+                msg.isMe
+                  ? "bg-[#ff3300] text-white"
+                  : "bg-[#f5f5f5] text-black"
+              }`}
+            >
+              {msg.text}
+            </div>
+
+            <div className="flex items-center gap-1 font-mono text-[9px] text-zinc-500 uppercase">
+              <span>{msg.timestamp}</span>
+              {msg.isMe && <CheckCheck className="w-3 h-3 text-black" />}
+            </div>
+          </div>
+        ))}
+
+        <div className="h-4" />
       </main>
 
       {/* Swiss Modern Message Input Footer */}

@@ -12,9 +12,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Parse origins from .env and include Android Capacitor default webview origins
-allowed_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",")]
-allowed_origins.extend(["http://localhost", "capacitor://localhost"])
+allowed_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+for default_origin in ["http://localhost:5173", "http://localhost:3000", "capacitor://localhost", "http://localhost"]:
+    if default_origin not in allowed_origins:
+        allowed_origins.append(default_origin)
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,15 +34,25 @@ app.include_router(streaks.router)
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    await init_redis()
+    try:
+        await init_redis()
+    except Exception as e:
+        print(f"Notice: Redis connection unavailable at startup ({e}). Continuing in standalone mode.")
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    await close_redis()
+    try:
+        await close_redis()
+    except Exception:
+        pass
 
 @app.get("/health", tags=["Telemetry"])
-async def health_check(r: aioredis.Redis = Depends(get_redis)):
-    redis_status = "connected" if await r.ping() else "disconnected"
+async def health_check():
+    try:
+        r = get_redis()
+        redis_status = "connected" if await r.ping() else "disconnected"
+    except Exception:
+        redis_status = "disconnected"
     return {
         "status": "online",
         "service": "dualo-backend",

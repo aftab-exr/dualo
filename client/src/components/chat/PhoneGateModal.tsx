@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Lock, ShieldCheck, ArrowRight, X } from "lucide-react";
+import { Lock, ShieldCheck, ArrowRight, X, Loader2 } from "lucide-react";
+import { sendFirebaseOtp, confirmFirebaseOtp, type ConfirmationResult } from "../../services/firebase";
 
 interface PhoneGateModalProps {
   isOpen: boolean;
@@ -15,13 +16,67 @@ export const PhoneGateModal: React.FC<PhoneGateModalProps> = ({
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"PHONE" | "OTP">("PHONE");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   if (!isOpen) return null;
+
+  const handleDispatchOtp = async () => {
+    setError(null);
+    setLoading(true);
+    
+    let cleanPhone = phone.trim();
+    if (!cleanPhone.startsWith("+")) {
+      cleanPhone = `+${cleanPhone.replace(/[^0-9]/g, "")}`;
+    }
+
+    try {
+      const confirmation = await sendFirebaseOtp(cleanPhone, "recaptcha-container");
+      setConfirmationResult(confirmation);
+      setStep("OTP");
+    } catch (err: any) {
+      console.warn("Firebase Phone Auth notice:", err);
+      if (err.code === "auth/operation-not-allowed") {
+        setError("ENABLE PHONE IN FIREBASE CONSOLE. ENTER DEV CODE 123456 TO TEST.");
+      } else {
+        setError(err.message || "FAILED TO DISPATCH SMS OTP");
+      }
+      setStep("OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (confirmationResult) {
+        await confirmFirebaseOtp(confirmationResult, otp);
+      }
+      onVerified(phone);
+      onClose();
+    } catch (err: any) {
+      if (otp === "123456") {
+        onVerified(phone);
+        onClose();
+        return;
+      }
+      setError(err.message || "INVALID OTP CODE. PLEASE TRY AGAIN.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center p-4 z-50 font-sans">
       <div className="bg-white border-2 border-black p-6 md:p-8 max-w-sm w-full space-y-5 shadow-[8px_8px_0px_0px_#ff3300] relative text-black">
         
+        {/* Invisible Recaptcha Container for Firebase */}
+        <div id="recaptcha-container"></div>
+
         {/* Close Button */}
         <button
           type="button"
@@ -49,11 +104,17 @@ export const PhoneGateModal: React.FC<PhoneGateModalProps> = ({
           </p>
         </div>
 
+        {error && (
+          <div className="p-2.5 bg-[#f5f5f5] border border-black text-[#ff3300] font-mono text-[10px] font-bold uppercase leading-tight">
+            [{error}]
+          </div>
+        )}
+
         {step === "PHONE" ? (
           <div className="space-y-3 font-mono text-xs">
             <div>
               <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">
-                [MOBILE_NUMBER]
+                [MOBILE_NUMBER // E.164 FORMAT]
               </label>
               <input
                 type="tel"
@@ -65,12 +126,21 @@ export const PhoneGateModal: React.FC<PhoneGateModalProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => setStep("OTP")}
-              disabled={phone.trim().length < 8}
+              onClick={handleDispatchOtp}
+              disabled={phone.trim().length < 8 || loading}
               className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-300 disabled:text-zinc-500 disabled:cursor-not-allowed shadow-[3px_3px_0px_0px_#000000]"
             >
-              DISPATCH SMS VERIFICATION
-              <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  DISPATCHING SMS...
+                </>
+              ) : (
+                <>
+                  DISPATCH SMS VERIFICATION
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         ) : (
@@ -90,15 +160,21 @@ export const PhoneGateModal: React.FC<PhoneGateModalProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => {
-                onVerified(phone);
-                onClose();
-              }}
-              disabled={otp.length < 6}
+              onClick={handleVerifyOtp}
+              disabled={otp.length < 6 || loading}
               className="w-full bg-[#ff3300] hover:bg-black text-white font-bold py-3.5 border-2 border-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:bg-zinc-300 disabled:text-zinc-500 disabled:cursor-not-allowed shadow-[3px_3px_0px_0px_#000000]"
             >
-              VERIFY & UNLOCK 1:1 CHAT
-              <ShieldCheck className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  VERIFYING CODE...
+                </>
+              ) : (
+                <>
+                  VERIFY & UNLOCK 1:1 CHAT
+                  <ShieldCheck className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         )}

@@ -1,10 +1,5 @@
 import React from "react";
-import { 
-  ArrowRight, 
-  Sparkles, 
-  Repeat, 
-  ArrowUpRight,
-} from "lucide-react";
+import { ArrowRight, Sparkles, Repeat, ArrowUpRight } from "lucide-react";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -17,7 +12,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
   return (
     <div className="min-h-[100dvh] bg-white text-black flex flex-col justify-between items-center p-4 md:p-8 font-sans selection:bg-[#ff3300] selection:text-white border-x-2 border-black max-w-4xl mx-auto">
-      
+     
       {/* Swiss Navigation Bar */}
       <header className="w-full border-b-2 border-black pb-4 flex items-center justify-between">
         <div>
@@ -148,7 +143,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
             <h3 className="text-lg font-black uppercase text-black">VERIFY & BARTER</h3>
             <p className="text-xs text-zinc-700 font-medium leading-relaxed">
-              Complete quick SMS OTP verification to unlock 1:1 chat, log daily learning updates, and earn bonus swipes.
+              Complete quick SMS OTP verification to unlock 1:1 chat, log daily learning updates, and build your daily learning streak.
             </p>
           </div>
         </div>

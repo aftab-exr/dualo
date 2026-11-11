@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Sparkles, X } from 'lucide-react';
+import { MessageSquare, X, Sparkles } from 'lucide-react';
 
 interface CandidateProfile {
   id: string;
@@ -29,91 +29,75 @@ export const MatchModal: React.FC<MatchModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-md overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center shadow-2xl"
+          initial={{ opacity: 0, scale: 0.8, rotate: -3 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="relative w-full max-w-md bg-white border-4 border-[#E60023] shadow-max-black p-6 text-center text-black"
         >
-          {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/50 transition-colors"
+            className="absolute top-4 right-4 p-2 bg-black text-white border-2 border-[#E60023] rounded-full hover:bg-[#E60023] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[3]" />
           </button>
 
-          {/* Badge Header */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: 'spring', stiffness: 400 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 text-sm font-semibold mb-4"
-          >
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>It's a Skill Swap!</span>
-          </motion.div>
+          <div className="inline-flex items-center gap-1.5 px-4 py-1 bg-[#E60023] text-white border-2 border-black font-modern font-black text-xs uppercase tracking-widest mb-3">
+            <Sparkles className="w-4 h-4 fill-white" />
+            <span>MUTUAL SKILL MATCH</span>
+          </div>
 
-          {/* Title */}
-          <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
-            Mutual Match!
+          <h2 className="font-cursive text-6xl font-black text-[#E60023] leading-none mb-1">
+            MUTUAL SKILL MATCH
           </h2>
-          <p className="text-slate-400 text-sm mb-6">
-            You and <span className="text-white font-medium">@{matchedUser.handle}</span> swiped right on each other's skills.
+
+          <p className="font-modern font-extrabold text-sm uppercase text-black mb-6">
+            YOU & @{matchedUser.handle} MATCHED SKILLS
           </p>
 
-          {/* Skill Exchange Preview */}
-          <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/50 mb-6 text-left space-y-3">
+          <div className="bg-[#F4F4F4] border-3 border-black p-4 rounded-2xl text-left space-y-3 mb-6 shadow-max-black">
             <div>
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                You offer:
+              <span className="font-modern text-[10px] font-black text-[#E60023] uppercase tracking-wider block mb-1">
+                YOU TEACH THEM:
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {matchedUser.skillsWanted.slice(0, 3).map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                  >
-                    {skill}
+              <div className="flex flex-wrap gap-1">
+                {matchedUser.skillsWanted.slice(0, 3).map((s) => (
+                  <span key={s} className="px-2.5 py-0.5 bg-[#E60023] text-white font-modern font-extrabold text-xs uppercase">
+                    {s}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="border-t border-slate-700/50 pt-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-                They offer:
+            <div className="border-t-2 border-black pt-2">
+              <span className="font-modern text-[10px] font-black text-black uppercase tracking-wider block mb-1">
+                THEY TEACH YOU:
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {matchedUser.skillsOffered.slice(0, 3).map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                  >
-                    {skill}
+              <div className="flex flex-wrap gap-1">
+                {matchedUser.skillsOffered.slice(0, 3).map((s) => (
+                  <span key={s} className="px-2.5 py-0.5 bg-black text-white font-modern font-extrabold text-xs uppercase">
+                    {s}
                   </span>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-3">
             <button
               onClick={() => onStartChat(matchId)}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-[#E60023] text-white font-modern font-black text-base uppercase tracking-wider border-3 border-black shadow-max-black hover:bg-red-dark active:translate-x-1 active:translate-y-1 transition-all"
             >
-              <MessageSquare className="w-5 h-5" />
-              Start Skill Exchange Chat
+              <MessageSquare className="w-5 h-5 stroke-[3]" />
+              START CHAT NOW
             </button>
 
             <button
               onClick={onClose}
-              className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors"
+              className="w-full py-3 px-4 bg-black text-white font-modern font-extrabold text-xs uppercase border-2 border-black hover:bg-slate-900 transition-colors"
             >
-              Keep Swiping
+              KEEP SWIPING
             </button>
           </div>
         </motion.div>

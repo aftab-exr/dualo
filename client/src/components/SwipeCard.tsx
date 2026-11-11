@@ -14,53 +14,29 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
   const controls = useAnimation();
   const x = useMotionValue(0);
 
-  // 1. Dynamic Rotation based on horizontal drag distance (-200px to 200px -> -15deg to 15deg)
-  const rotate = useTransform(x, [-200, 200], [-15, 15]);
-
-  // 2. Dynamic Opacity Overlays for Swipe Right (SWAP - Green) and Swipe Left (SKIP - Red)
+  const rotate = useTransform(x, [-200, 200], [-18, 18]);
   const swapBadgeOpacity = useTransform(x, [20, 120], [0, 1]);
   const skipBadgeOpacity = useTransform(x, [-20, -120], [0, 1]);
 
-  // 3. Touch Drag Release Threshold Handler
   const handleDragEnd = async (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const swipeThreshold = 120; // Minimum drag distance in pixels
-    const velocityThreshold = 400; // Minimum drag speed for quick flicks
+    const swipeThreshold = 120;
+    const velocityThreshold = 400;
 
     if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
-      // Fly off screen to the RIGHT
-      await controls.start({
-        x: 500,
-        opacity: 0,
-        transition: { duration: 0.2, ease: 'easeOut' },
-      });
+      await controls.start({ x: 500, opacity: 0, transition: { duration: 0.2 } });
       onSwipe(candidate.id, 'SWAP');
     } else if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
-      // Fly off screen to the LEFT
-      await controls.start({
-        x: -500,
-        opacity: 0,
-        transition: { duration: 0.2, ease: 'easeOut' },
-      });
+      await controls.start({ x: -500, opacity: 0, transition: { duration: 0.2 } });
       onSwipe(candidate.id, 'SKIP');
     } else {
-      // Snap back to center spring physics
-      controls.start({
-        x: 0,
-        transition: { type: 'spring', stiffness: 400, damping: 25 },
-      });
+      controls.start({ x: 0, transition: { type: 'spring', stiffness: 500, damping: 25 } });
     }
   };
 
-  // Background stack cards (non-draggable preview)
   if (!isFrontCard) {
     return (
-      <div className="absolute inset-0 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl scale-95 translate-y-3 pointer-events-none opacity-60 transition-transform">
-        <div className="h-full flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-slate-300">{candidate.fullName}</h3>
-            <p className="text-slate-500 text-sm">@{candidate.handle}</p>
-          </div>
-        </div>
+      <div className="absolute inset-0 bg-white border-4 border-black shadow-max-white scale-95 translate-y-4 pointer-events-none opacity-40">
+        <h3 className="font-cursive text-4xl text-red">{candidate.fullName}</h3>
       </div>
     );
   }
@@ -68,72 +44,75 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
   return (
     <motion.div
       drag="x"
-      dragConstraints={{ left: -300, right: 300 }}
+      dragConstraints={{ left: 0, right: 0 }}
       style={{ x, rotate }}
       animate={controls}
       onDragEnd={handleDragEnd}
-      whileDrag={{ cursor: 'grabbing' }}
-      className="absolute inset-0 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between touch-none select-none cursor-grab z-10"
+      className="absolute inset-0 bg-white border-4 border-black shadow-max-red flex flex-col justify-between touch-none select-none cursor-grab z-10 text-black"
     >
-      {/* Visual Feedback Overlays */}
+      {/* SWAP / PASS Maximalist Badges */}
       <motion.div
         style={{ opacity: swapBadgeOpacity }}
-        className="absolute top-6 left-6 z-20 border-4 border-emerald-500 rounded-2xl px-4 py-1.5 rotate-[-15deg] bg-slate-950/40 backdrop-blur-sm pointer-events-none"
+        className="absolute top-5 left-5 z-20 bg-[#E60023] text-white border-3 border-black px-4 py-1 rotate-[-12deg] shadow-max-black pointer-events-none"
       >
-        <div className="flex items-center gap-1.5 text-emerald-400 font-black text-2xl tracking-wider">
-          <Check className="w-7 h-7 stroke-[3]" />
-          <span>SWAP</span>
+        <div className="flex items-center gap-1.5 font-modern font-black text-2xl tracking-tighter uppercase">
+          <Check className="w-7 h-7 stroke-[4]" />
+          <span>SWAP IT</span>
         </div>
       </motion.div>
 
       <motion.div
         style={{ opacity: skipBadgeOpacity }}
-        className="absolute top-6 right-6 z-20 border-4 border-rose-500 rounded-2xl px-4 py-1.5 rotate-[15deg] bg-slate-950/40 backdrop-blur-sm pointer-events-none"
+        className="absolute top-5 right-5 z-20 bg-black text-white border-3 border-[#E60023] px-4 py-1 rotate-[12deg] shadow-max-red pointer-events-none"
       >
-        <div className="flex items-center gap-1.5 text-rose-400 font-black text-2xl tracking-wider">
-          <X className="w-7 h-7 stroke-[3]" />
-          <span>SKIP</span>
+        <div className="flex items-center gap-1.5 font-modern font-black text-2xl tracking-tighter uppercase">
+          <X className="w-7 h-7 stroke-[4]" />
+          <span>PASS</span>
         </div>
       </motion.div>
 
       {/* Profile Header */}
       <div>
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="text-2xl font-bold text-white tracking-tight">{candidate.fullName}</h3>
-            <p className="text-blue-400 font-medium text-sm">@{candidate.handle}</p>
-          </div>
+        <div className="flex items-baseline justify-between mb-1">
+          <h2 className="font-cursive text-5xl font-extrabold text-[#E60023] leading-none tracking-wide">
+            {candidate.fullName}
+          </h2>
           {candidate.location && (
-            <div className="flex items-center gap-1 text-slate-400 text-xs bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700/50">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              <span>{candidate.location}</span>
-            </div>
+            <span className="flex items-center gap-1 text-xs font-modern font-black uppercase bg-[#E60023] text-white px-2.5 py-1 rounded-full border-2 border-black">
+              <MapPin className="w-3 h-3" />
+              {candidate.location}
+            </span>
           )}
         </div>
 
+        <p className="font-modern font-black text-sm tracking-wider uppercase text-black mb-3">
+          @{candidate.handle}
+        </p>
+
         {candidate.headline && (
-          <p className="text-slate-300 text-sm italic mb-4">"{candidate.headline}"</p>
+          <p className="font-cursive text-2xl text-black leading-snug mb-3">
+            "{candidate.headline}"
+          </p>
         )}
 
-        {/* Bio */}
         {candidate.bio && (
-          <p className="text-slate-400 text-sm line-clamp-3 mb-4 leading-relaxed">
+          <p className="font-modern text-xs font-bold text-slate-800 line-clamp-3 leading-relaxed border-l-4 border-[#E60023] pl-3 my-2">
             {candidate.bio}
           </p>
         )}
       </div>
 
-      {/* Skill Tags Section */}
-      <div className="space-y-3 border-t border-slate-800 pt-4">
+      {/* Maximalist Skills Blocks */}
+      <div className="space-y-3 pt-3 border-t-4 border-black">
         <div>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
-            Teaches:
+          <span className="font-modern text-[11px] font-black uppercase tracking-widest text-[#E60023] block mb-1">
+            TEACHES:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {candidate.skillsOffered.map((skill) => (
               <span
                 key={skill}
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                className="px-3 py-1 bg-[#E60023] text-white font-modern font-extrabold text-xs uppercase border-2 border-black shadow-max-black"
               >
                 {skill}
               </span>
@@ -142,14 +121,14 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
         </div>
 
         <div>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
-            Wants to learn:
+          <span className="font-modern text-[11px] font-black uppercase tracking-widest text-black block mb-1">
+            WANTS TO LEARN:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {candidate.skillsWanted.map((skill) => (
               <span
                 key={skill}
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                className="px-3 py-1 bg-black text-white font-modern font-extrabold text-xs uppercase border-2 border-[#E60023] shadow-max-red"
               >
                 {skill}
               </span>
