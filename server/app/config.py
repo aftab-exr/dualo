@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dualo_secret_key")
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+    FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "")
 
     class Config:
         env_file = ".env"

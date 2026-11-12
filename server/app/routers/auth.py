@@ -8,14 +8,34 @@ from app.models import User, Profile, UserSkill
 from app.schemas import UserRegisterRequest, UserLoginRequest, PhoneVerifyRequest, AuthResponse, UserProfileResponse
 from app.security import hash_password, verify_password, create_access_token
 from app.dependencies import get_current_user
+from app.config import settings
 import firebase_admin
-from firebase_admin import auth as firebase_auth
+from firebase_admin import auth as firebase_auth, credentials as firebase_credentials
+import json, os
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 # Initialize Firebase Admin SDK once
 if not firebase_admin._apps:
-    firebase_admin.initialize_app()
+    # Option 1: GOOGLE_APPLICATION_CREDENTIALS env var pointing to a JSON file
+    # Option 2: FIREBASE_SERVICE_ACCOUNT_JSON env var with the JSON string
+    # Option 3: Just the project ID (sufficient for ID token verification)
+    sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "")
+    if sa_json:
+        try:
+            sa_dict = json.loads(sa_json)
+            cred = firebase_credentials.Certificate(sa_dict)
+            firebase_admin.initialize_app(cred)
+        except Exception as e:
+            print(f"Warning: Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
+            firebase_admin.initialize_app()
+    elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+        firebase_admin.initialize_app()
+    elif settings.FIREBASE_PROJECT_ID:
+        # Minimal init with just project ID — enough for verify_id_token
+        firebase_admin.initialize_app(options={"projectId": settings.FIREBASE_PROJECT_ID})
+    else:
+        firebase_admin.initialize_app()
 
 @router.post("/google", response_model=AuthResponse)
 async def google_auth(
