@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+import jwt
 from app.database import get_db
 from app.models import User
 from app.security import decode_access_token
@@ -14,11 +15,19 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db)
 ) -> User:
     token = credentials.credentials
-    payload = decode_access_token(token)
+    try:
+        payload = decode_access_token(token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     if not payload or "sub" not in payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired access token",
+            detail="Invalid access token",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

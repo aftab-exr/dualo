@@ -17,7 +17,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(user_id: str) -> str:
     expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),  # Ensure string format
         "exp": expire,
         "iat": datetime.utcnow()
     }
@@ -27,5 +27,7 @@ def decode_access_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except jwt.PyJWTError:
+    except jwt.ExpiredSignatureError:
+        raise
+    except jwt.InvalidTokenError:
         return None
