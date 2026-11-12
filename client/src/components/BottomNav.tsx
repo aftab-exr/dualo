@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, MessageSquare, Flame, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type TabType = 'LANDING' | 'AUTH' | 'FEED' | 'BLOG' | 'CHAT' | 'PROFILE' | 'MATCHES' | 'STREAKS';
 
@@ -9,12 +10,19 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) => {
+  const navigate = useNavigate();
+  
   const navItems = [
-    { tab: 'FEED' as TabType, label: 'FEED', icon: Sparkles },
-    { tab: 'MATCHES' as TabType, label: 'MATCHES', icon: MessageSquare },
-    { tab: 'STREAKS' as TabType, label: 'STREAKS', icon: Flame },
-    { tab: 'PROFILE' as TabType, label: 'PROFILE', icon: User },
+    { tab: 'FEED' as TabType, label: 'FEED', icon: Sparkles, path: '/' },
+    { tab: 'MATCHES' as TabType, label: 'MATCHES', icon: MessageSquare, path: '/matches' },
+    { tab: 'STREAKS' as TabType, label: 'STREAKS', icon: Flame, path: '/streaks' },
+    { tab: 'PROFILE' as TabType, label: 'PROFILE', icon: User, path: '/profile' },
   ];
+
+  const handleTabClick = (item: typeof navItems[0]) => {
+    onTabChange(item.tab);
+    navigate(item.path);
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t-4 border-black max-w-md mx-auto">
@@ -25,7 +33,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
           return (
             <button
               key={item.tab}
-              onClick={() => onTabChange(item.tab)}
+              onClick={() => handleTabClick(item)}
               className={`flex flex-col items-center justify-center flex-1 h-full py-1 font-modern font-extrabold text-[10px] uppercase tracking-wider transition-colors relative ${
                 isActive ? 'text-[#E60023]' : 'text-black hover:text-[#E60023]'
               }`}
