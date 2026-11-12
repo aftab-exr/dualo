@@ -27,28 +27,98 @@ async function getTokenFromPersistedStorage(): Promise<string | null> {
   return null;
 }
 
+// Fallback to check localStorage for web (non-Capacitor) builds
+function getTokenFromLocalStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    // Check common localStorage keys
+    const keys = ['access_token', 'token', 'dualo_auth_token', 'dualo-auth'];
+    for (const key of keys) {
+      const value = localStorage.getItem(key);
+      if (value) return value;
+    }
+    // Check CapacitorStorage keys
+    const capacitorKeys = ['CapacitorStorage.access_token', 'CapacitorStorage.token', 'CapacitorStorage.dualo-auth'];
+    for (const key of capacitorKeys) {
+      const value = localStorage.getItem(key);
+      if (value) return value;
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return null;
+}
+
+// Fallback to check Capacitor Preferences for additional keys
+async function getTokenFromCapacitorPrefs(): Promise<string | null> {
+  try {
+    const keys = ['access_token', 'token', 'dualo-auth', 'CapacitorStorage.access_token', 'CapacitorStorage.token', 'CapacitorStorage.dualo-auth'];
+    for (const key of keys) {
+      const { value } = await Preferences.get({ key });
+      if (value) return value;
+    }
+  } catch {
+    // Ignore Preferences errors
+  }
+  return null;
+}
+
 export async function getAuthToken(): Promise<string | null> {
   // 1. Check store first (synchronous)
   const syncToken = getTokenSync();
   if (syncToken) return syncToken;
   
-  // 2. Check dedicated token key
+  // 2. Check dedicated token key in Capacitor Preferences
   const { value } = await Preferences.get({ key: TOKEN_KEY });
   if (value) return value;
   
-  // 3. Check persisted Zustand storage
-  return await getTokenFromPersistedStorage();
+  // 3. Check persisted Zustand storage in Capacitor Preferences
+  const persistedToken = await getTokenFromPersistedStorage();
+  if (persistedToken) return persistedToken;
+  
+  // 4. Check localStorage (web fallback)
+  const localToken = getTokenFromLocalStorage();
+  if (localToken) return localToken;
+  
+  // 5. Check additional Capacitor Preferences keys
+  return await getTokenFromCapacitorPrefs();
 }
 
 export async function setAuthToken(token: string): Promise<void> {
   await Preferences.set({ key: TOKEN_KEY, value: token });
   // Also update Zustand store immediately
   useAuthStore.setState({ token });
+  // Also persist to localStorage for web
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem('access_token', token);
+      localStorage.setItem('token', token);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
 }
 
 export async function clearAuthToken(): Promise<void> {
   await Preferences.remove({ key: TOKEN_KEY });
   await Preferences.remove({ key: 'dualo-auth-storage' });
+  // Also clear additional Capacitor Preferences keys
+  const keys = ['access_token', 'token', 'dualo-auth', 'CapacitorStorage.access_token', 'CapacitorStorage.token', 'CapacitorStorage.dualo-auth'];
+  for (const key of keys) {
+    await Preferences.remove({ key });
+  }
+  // Clear localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const keys = ['access_token', 'token', 'dualo_auth_token', 'dualo-auth', 'CapacitorStorage.access_token', 'CapacitorStorage.token', 'CapacitorStorage.dualo-auth'];
+      for (const key of keys) {
+        localStorage.removeItem(key);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
   useAuthStore.setState({ token: null, user: null, isAuthenticated: false });
 }
 
