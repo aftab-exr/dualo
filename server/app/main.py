@@ -32,8 +32,21 @@ app.include_router(streaks.router)
 
 @app.on_event("startup")
 async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    import asyncio
+    # Retry DB connection up to 5 times (handles cold-start delays on free-tier hosts)
+    for attempt in range(1, 6):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            print("Database connected and tables verified.")
+            break
+        except Exception as e:
+            print(f"DB connection attempt {attempt}/5 failed: {e}")
+            if attempt == 5:
+                print("WARNING: Could not reach the database after 5 attempts. "
+                      "The app will start, but DB-dependent routes will fail until the database is reachable.")
+            else:
+                await asyncio.sleep(3)
     try:
         await init_redis()
     except Exception as e:
