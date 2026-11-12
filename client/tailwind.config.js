@@ -8,7 +8,6 @@ export default {
           red: '#E60023',
           white: '#FFFFFF',
           black: '#000000',
-          offwhite: '#F4F4F4',
         },
       },
       fontFamily: {

@@ -10,7 +10,7 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   token?: string | null;
-  
+
   // Actions
   loginWithGoogle: (idToken: string) => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
@@ -117,7 +117,7 @@ export const useAuthStore = create<AuthState>()(
       fetchProfile: async () => {
         const { isAuthenticated } = get();
         if (!isAuthenticated) return;
-        
+
         try {
           const user = await api.get<UserProfileResponse>('/auth/me');
           set({ user });

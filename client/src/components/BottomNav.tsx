@@ -26,14 +26,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
             <button
               key={item.tab}
               onClick={() => onTabChange(item.tab)}
-              className={`flex flex-col items-center justify-center flex-1 h-full py-1 font-mono font-extrabold text-[10px] uppercase tracking-wider transition-colors relative ${
-                isActive ? 'text-[#ff3300]' : 'text-black hover:text-[#ff3300]'
+              className={`flex flex-col items-center justify-center flex-1 h-full py-1 font-modern font-extrabold text-[10px] uppercase tracking-wider transition-colors relative ${
+                isActive ? 'text-[#E60023]' : 'text-black hover:text-[#E60023]'
               }`}
             >
               <Icon className={`w-5 h-5 mb-0.5 ${isActive ? 'stroke-[3]' : 'stroke-2'}`} />
               <span>{item.label}</span>
               {isActive && (
-                <span className="absolute bottom-1 w-full h-1.5 bg-[#ff3300] shadow-max-black" />
+                <span className="absolute bottom-1 w-full h-1.5 bg-[#E60023] shadow-max-black" />
               )}
             </button>
           );

@@ -4,7 +4,6 @@ from app.config import settings
 from app.database import engine, Base
 from app.redis_client import init_redis, close_redis, get_redis
 from app.routers import auth, feed, chat, streaks
-import redis.asyncio as aioredis
 
 app = FastAPI(
     title="Dualo Skill-Barter API",
@@ -12,14 +11,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-allowed_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
-for default_origin in ["http://localhost:5173", "http://localhost:3000", "capacitor://localhost", "http://localhost"]:
-    if default_origin not in allowed_origins:
-        allowed_origins.append(default_origin)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
