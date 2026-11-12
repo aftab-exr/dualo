@@ -10,6 +10,7 @@ export interface CandidateProfile {
   location?: string;
   skillsOffered: string[];
   skillsWanted: string[];
+  avatarUrl?: string;
 }
 
 export function useSwipeFeed() {

@@ -78,12 +78,14 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({ feed: passedFeed }) => {
     <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-6">
       <div className="relative w-full h-[460px]">
         <AnimatePresence>
-          <SwipeCard
-            key={currentCandidate.id}
-            candidate={currentCandidate}
-            onSwipe={handleSwipe}
-            isFrontCard={true}
-          />
+          {currentCandidate && (
+            <SwipeCard
+              key={currentCandidate.id}
+              candidate={currentCandidate}
+              onSwipe={handleSwipe}
+              isFrontCard={true}
+            />
+          )}
         </AnimatePresence>
       </div>
 
@@ -91,7 +93,8 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({ feed: passedFeed }) => {
         <button
           onClick={() => onButtonSwipe('SKIP')}
           aria-label="Skip Candidate"
-          className="w-14 h-14 rounded-full bg-black border-3 border-[#E60023] text-[#E60023] flex items-center justify-center shadow-max-red hover:bg-slate-900 transition-all active:scale-95"
+          disabled={!currentCandidate}
+          className="w-14 h-14 rounded-full bg-black border-3 border-[#E60023] text-[#E60023] flex items-center justify-center shadow-max-red hover:bg-slate-900 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <X className="w-7 h-7 stroke-[2.5]" />
         </button>
@@ -107,7 +110,8 @@ export const SwipeDeck: React.FC<SwipeDeckProps> = ({ feed: passedFeed }) => {
         <button
           onClick={() => onButtonSwipe('SWAP')}
           aria-label="Swap Skill"
-          className="w-14 h-14 rounded-full bg-[#E60023] text-white flex items-center justify-center shadow-max-black hover:bg-red-dark transition-all active:scale-95"
+          disabled={!currentCandidate}
+          className="w-14 h-14 rounded-full bg-[#E60023] text-white flex items-center justify-center shadow-max-black hover:bg-red-dark transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Check className="w-7 h-7 stroke-[3]" />
         </button>

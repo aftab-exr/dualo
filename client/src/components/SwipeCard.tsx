@@ -100,6 +100,18 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
             {candidate.bio}
           </p>
         )}
+
+        {/* Avatar placeholder */}
+        {candidate.avatarUrl && (
+          <div className="mt-3 mb-3">
+            <img 
+              src={candidate.avatarUrl} 
+              alt={`${candidate.fullName}'s avatar`}
+              className="w-20 h-20 rounded-full mx-auto border-2 border-black object-cover"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Maximalist Skills Blocks */}
@@ -109,14 +121,18 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
             TEACHES:
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {candidate.skillsOffered.map((skill) => (
-              <span
-                key={skill}
-                className="px-3 py-1 bg-[#E60023] text-white font-modern font-extrabold text-xs uppercase border-2 border-black shadow-max-black"
-              >
-                {skill}
-              </span>
-            ))}
+            {candidate.skillsOffered && candidate.skillsOffered.length > 0 ? (
+              candidate.skillsOffered.map((skill) => (
+                <span
+                  key={skill}
+                  className="px-3 py-1 bg-[#E60023] text-white font-modern font-extrabold text-xs uppercase border-2 border-black shadow-max-black"
+                >
+                  {skill}
+                </span>
+              ))
+            ) : (
+              <span className="font-modern text-xs font-bold text-slate-500 uppercase">No skills listed</span>
+            )}
           </div>
         </div>
 
@@ -125,14 +141,18 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ candidate, onSwipe, isFron
             WANTS TO LEARN:
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {candidate.skillsWanted.map((skill) => (
-              <span
-                key={skill}
-                className="px-3 py-1 bg-black text-white font-modern font-extrabold text-xs uppercase border-2 border-[#E60023] shadow-max-red"
-              >
-                {skill}
-              </span>
-            ))}
+            {candidate.skillsWanted && candidate.skillsWanted.length > 0 ? (
+              candidate.skillsWanted.map((skill) => (
+                <span
+                  key={skill}
+                  className="px-3 py-1 bg-black text-white font-modern font-extrabold text-xs uppercase border-2 border-[#E60023] shadow-max-red"
+                >
+                  {skill}
+                </span>
+              ))
+            ) : (
+              <span className="font-modern text-xs font-bold text-slate-500 uppercase">No skills listed</span>
+            )}
           </div>
         </div>
       </div>
