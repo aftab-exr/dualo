@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { LandingPage } from "./pages/LandingPage";
 import { AuthPage } from "./pages/AuthPage";
-import { SwipeFeed } from "./components/feed/SwipeFeed";
+import { SwipeDeck } from "./components/SwipeDeck";
+import { MatchModal } from "./components/MatchModal";
 import { BlogStreakFeed } from "./components/blog/BlogStreakFeed";
 import { ChatInterface } from "./components/chat/ChatInterface";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -10,14 +11,19 @@ import { PhoneGateModal } from "./components/chat/PhoneGateModal";
 import { useDualoStore } from "./store/useDualoStore";
 import { useAuthStore } from "./store/useAuthStore";
 import { BottomNav } from "./components/BottomNav";
+import { useSwipeFeed } from "./hooks/useSwipeFeed";
+import { useNavigate } from "react-router-dom";
 
 type TabType = "LANDING" | "AUTH" | "FEED" | "BLOG" | "CHAT" | "PROFILE" | "MATCHES" | "STREAKS";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>("LANDING");
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const { verifyPhone, chatSession, setChatSession } = useDualoStore();
+  const feed = useSwipeFeed();
+  const { matchEvent, clearMatchEvent, currentCandidate } = feed;
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-[#ff3300] selection:text-white flex flex-col">
@@ -33,7 +39,19 @@ export default function App() {
           <AuthPage onCompleteAuth={() => setActiveTab("FEED")} />
         )}
         {activeTab === "FEED" && (
-          <SwipeFeed onOpenChatGate={() => setActiveTab("CHAT")} />
+          <>
+            <SwipeDeck feed={feed} />
+            <MatchModal
+              isOpen={Boolean(matchEvent?.isMatch)}
+              matchId={matchEvent?.matchId}
+              matchedUser={currentCandidate}
+              onClose={clearMatchEvent}
+              onStartChat={(matchId) => {
+                clearMatchEvent();
+                navigate(`/chat/${matchId}`);
+              }}
+            />
+          </>
         )}
         {activeTab === "MATCHES" && (
           <MatchesFeed

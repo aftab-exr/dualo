@@ -34,3 +34,5 @@ pnpm-debug.log*
 .DS_Store
 .vscode/
 !.vscode/extensions.json
+.env.development
+.env.production

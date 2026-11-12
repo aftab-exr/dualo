@@ -5,7 +5,6 @@ import { SwipeCard } from './SwipeCard';
 import { useSwipeFeed } from '../hooks/useSwipeFeed';
 
 interface SwipeDeckProps {
-  onMatch?: (matchId: string) => void;
   feed?: ReturnType<typeof useSwipeFeed>;
 }
 
