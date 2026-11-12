@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from datetime import datetime
+from pydantic import BaseModel
 from app.database import get_db
 from app.models import User, Profile, UserSkill
 from app.schemas import UserRegisterRequest, UserLoginRequest, PhoneVerifyRequest, AuthResponse, UserProfileResponse
@@ -11,9 +12,16 @@ from app.dependencies import get_current_user
 from app.config import settings
 import firebase_admin
 from firebase_admin import auth as firebase_auth, credentials as firebase_credentials
-import json, os
+import json
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
+
+class GoogleAuthRequest(BaseModel):
+    idToken: str
 
 # Initialize Firebase Admin SDK once
 if not firebase_admin._apps:
@@ -27,8 +35,8 @@ if not firebase_admin._apps:
             cred = firebase_credentials.Certificate(sa_dict)
             firebase_admin.initialize_app(cred)
         except Exception as e:
-            print(f"Warning: Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
-            firebase_admin.initialize_app()
+            logger.warning(f"Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON: {e}")
+            firebase_admin.initialize_app(options={"projectId": settings.FIREBASE_PROJECT_ID})
     elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
         firebase_admin.initialize_app()
     elif settings.FIREBASE_PROJECT_ID:
@@ -39,33 +47,46 @@ if not firebase_admin._apps:
 
 @router.post("/google", response_model=AuthResponse)
 async def google_auth(
-    body: dict,
+    body: GoogleAuthRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    id_token = body.get("idToken")
+    id_token = body.idToken
     if not id_token:
         raise HTTPException(status_code=400, detail="ID token required")
     
     # Verify Firebase ID token using Admin SDK with fallback to Google tokeninfo
     decoded_token = None
     try:
-        decoded_token = firebase_auth.verify_id_token(id_token)
-    except Exception:
+        # clock_skew_seconds=10 handles minor clock differences between client/server
+        decoded_token = firebase_auth.verify_id_token(id_token, clock_skew_seconds=10)
+        logger.info(f"Firebase token verified for user: {decoded_token.get('email', 'unknown')}")
+    except firebase_auth.ExpiredIdTokenError as e:
+        logger.error(f"Expired Firebase ID token: {e}")
+        raise HTTPException(status_code=401, detail=f"Firebase ID token expired: {e}")
+    except firebase_auth.RevokedIdTokenError as e:
+        logger.error(f"Revoked Firebase ID token: {e}")
+        raise HTTPException(status_code=401, detail=f"Firebase ID token revoked: {e}")
+    except firebase_auth.InvalidIdTokenError as e:
+        logger.error(f"Invalid Firebase ID token: {e}")
+        raise HTTPException(status_code=401, detail=f"Invalid Firebase ID token: {e}")
+    except Exception as e:
+        logger.error(f"Firebase token verification failed: {type(e).__name__}: {e}")
         # Fallback to Google OAuth tokeninfo validation
         try:
             import urllib.request
-            import json
+            import json as json_lib
             req = urllib.request.Request(f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 if resp.status == 200:
-                    data = json.loads(resp.read().decode())
+                    data = json_lib.loads(resp.read().decode())
                     if "email" in data:
                         decoded_token = data
-        except Exception:
-            pass
+                        logger.info(f"Google tokeninfo fallback verified for: {data.get('email')}")
+        except Exception as fallback_e:
+            logger.error(f"Google tokeninfo fallback failed: {fallback_e}")
 
     if not decoded_token:
-        raise HTTPException(status_code=401, detail="Invalid Firebase ID token")
+        raise HTTPException(status_code=401, detail="Invalid Firebase ID token - verification failed")
     
     email = decoded_token.get("email")
     if not email:
