@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 export interface CandidateProfile {
   id: string;
@@ -18,8 +19,15 @@ export function useSwipeFeed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [matchEvent, setMatchEvent] = useState<{ isMatch: boolean; matchId?: string } | null>(null);
+  const token = useAuthStore((state) => state.token);
 
   const fetchFeed = useCallback(async () => {
+    // Don't fetch if no auth token
+    if (!token) {
+      setFeed([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const data = await api.get<CandidateProfile[]>('/feed');
@@ -30,7 +38,7 @@ export function useSwipeFeed() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchFeed();

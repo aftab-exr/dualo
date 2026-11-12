@@ -9,7 +9,9 @@ import { StreaksScreen } from "./screens/StreaksScreen";
 import { ProfileScreen } from "./screens/ProfileScreen";
 import { BottomNav } from "./components/BottomNav";
 import { useSwipeFeed } from "./hooks/useSwipeFeed";
+import { useAuthStore } from "./store/useAuthStore";
 import { useNavigate, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 
 type TabType = "LANDING" | "AUTH" | "FEED" | "BLOG" | "CHAT" | "PROFILE" | "MATCHES" | "STREAKS";
 
@@ -17,8 +19,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>("LANDING");
   const navigate = useNavigate();
 
+  const checkAuth = useAuthStore((state) => state.checkAuth);
   const feed = useSwipeFeed();
   const { matchEvent, clearMatchEvent, currentCandidate } = feed;
+
+  // Check auth on app startup
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-[#E60023] selection:text-white flex flex-col">
