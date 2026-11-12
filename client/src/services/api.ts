@@ -11,13 +11,33 @@ function getTokenSync(): string | null {
   return state.token ?? null;
 }
 
+// Fallback to check capacitorStorage directly for persisted Zustand state
+async function getTokenFromPersistedStorage(): Promise<string | null> {
+  try {
+    const { value } = await Preferences.get({ key: 'dualo-auth-storage' });
+    if (value) {
+      const parsed = JSON.parse(value);
+      if (parsed.state?.token) {
+        return parsed.state.token;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
 export async function getAuthToken(): Promise<string | null> {
-  // Check store first (synchronous), then fall back to persistent storage
+  // 1. Check store first (synchronous)
   const syncToken = getTokenSync();
   if (syncToken) return syncToken;
   
+  // 2. Check dedicated token key
   const { value } = await Preferences.get({ key: TOKEN_KEY });
-  return value;
+  if (value) return value;
+  
+  // 3. Check persisted Zustand storage
+  return await getTokenFromPersistedStorage();
 }
 
 export async function setAuthToken(token: string): Promise<void> {
@@ -28,6 +48,7 @@ export async function setAuthToken(token: string): Promise<void> {
 
 export async function clearAuthToken(): Promise<void> {
   await Preferences.remove({ key: TOKEN_KEY });
+  await Preferences.remove({ key: 'dualo-auth-storage' });
   useAuthStore.setState({ token: null, user: null, isAuthenticated: false });
 }
 
