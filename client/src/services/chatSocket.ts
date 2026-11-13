@@ -2,10 +2,18 @@ import { getAuthToken } from './api';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/api/v1';
 
+export interface Message {
+  id: string;
+  matchId: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+}
+
 export class ChatWebSocketService {
   private socket: WebSocket | null = null;
 
-  async connect(matchId: string, onMessageReceived: (msg: any) => void) {
+  async connect(matchId: string, onMessageReceived: (msg: Message) => void) {
     const token = await getAuthToken();
     if (!token) throw new Error("No authentication token found");
 
@@ -17,7 +25,7 @@ export class ChatWebSocketService {
     };
 
     this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const data = JSON.parse(event.data) as Message;
       onMessageReceived(data);
     };
 

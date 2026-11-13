@@ -42,8 +42,9 @@ export const MatchesScreen: React.FC = () => {
       setError(null);
       const data = await api.get<Match[]>('/matches');
       setMatches(data);
-    } catch (err: any) {
-      setError(err.message || 'FAILED TO LOAD MATCHES');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'FAILED TO LOAD MATCHES';
+      setError(message);
     } finally {
       setLoading(false);
     }

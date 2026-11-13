@@ -33,8 +33,9 @@ export function useSwipeFeed() {
       const data = await api.get<CandidateProfile[]>('/feed');
       setFeed(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load candidate feed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load candidate feed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export function useSwipeFeed() {
       if (res.isMatch) {
         setMatchEvent({ isMatch: true, matchId: res.matchId });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Swipe dispatch error:', err);
     }
   };

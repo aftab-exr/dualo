@@ -37,8 +37,9 @@ export const StreaksScreen: React.FC = () => {
       setError(null);
       const data = await api.get<StreakPost[]>('/streaks');
       setPosts(data);
-    } catch (err: any) {
-      setError(err.message || 'FAILED TO LOAD COMMUNITY STREAKS');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'FAILED TO LOAD COMMUNITY STREAKS';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -70,8 +71,9 @@ export const StreaksScreen: React.FC = () => {
       await checkAuth();
 
       setTimeout(() => setRewardMessage(null), 5000);
-    } catch (err: any) {
-      alert(err.message || 'FAILED TO SUBMIT STREAK POST');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'FAILED TO SUBMIT STREAK POST';
+      alert(message);
     } finally {
       setSubmitting(false);
     }

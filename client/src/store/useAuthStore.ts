@@ -29,7 +29,14 @@ export interface AuthState {
 
   // Compatibility aliases
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: {
+    email: string;
+    password: string;
+    fullName: string;
+    handle: string;
+    skillsOffered: string[];
+    skillsWanted: string[];
+  }) => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -48,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
         return get().loginWithEmail(credentials.email, credentials.password);
       },
 
-      register: async (data) => {
+      register: async (data: { email: string; password: string; fullName: string; handle: string; skillsOffered: string[]; skillsWanted: string[] }) => {
         return get().registerWithEmail(data);
       },
 
@@ -73,8 +80,9 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post<{ token: string; user: UserProfileResponse }>('/auth/google', { idToken });
           await setAuthToken(response.token);
           set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message || 'Google login failed', isLoading: false });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Google login failed';
+          set({ error: message, isLoading: false });
           throw err;
         }
       },
@@ -85,8 +93,9 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post<{ token: string; user: UserProfileResponse }>('/auth/login', { email, password });
           await setAuthToken(response.token);
           set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message || 'Email login failed', isLoading: false });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Email login failed';
+          set({ error: message, isLoading: false });
           throw err;
         }
       },
@@ -97,8 +106,9 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post<{ token: string; user: UserProfileResponse }>('/auth/register', data);
           await setAuthToken(response.token);
           set({ user: response.user, token: response.token, isAuthenticated: true, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message || 'Registration failed', isLoading: false });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Registration failed';
+          set({ error: message, isLoading: false });
           throw err;
         }
       },
@@ -108,8 +118,9 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await api.post<UserProfileResponse>('/auth/verify-phone', { phoneNumber, otpCode });
           set({ user: response, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message || 'Phone verification failed', isLoading: false });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Phone verification failed';
+          set({ error: message, isLoading: false });
           throw err;
         }
       },
@@ -121,8 +132,8 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await api.get<UserProfileResponse>('/auth/me');
           set({ user });
-        } catch (err: any) {
-          if (err.message?.includes('401')) {
+        } catch (err: unknown) {
+          if (err instanceof Error && err.message?.includes('401')) {
             get().logout();
           }
         }

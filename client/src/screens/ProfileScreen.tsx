@@ -67,8 +67,9 @@ export const ProfileScreen: React.FC = () => {
       setIsModalOpen(false);
       setStep('PHONE');
       setOtpCode('');
-    } catch (err: any) {
-      setError(err.message || 'VERIFICATION FAILED. PLEASE CHECK THE OTP CODE.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'VERIFICATION FAILED. PLEASE CHECK THE OTP CODE.';
+      setError(message);
     } finally {
       setSubmitting(false);
     }
